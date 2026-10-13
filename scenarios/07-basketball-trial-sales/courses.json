@@ -1,0 +1,12 @@
+{
+  "version": "2026-10-12",
+  "courses": [
+    {
+      "courseId": "BASKET-8-12-BEGINNER",
+      "title": "Beginner trial class",
+      "minAge": 8,
+      "maxAge": 12,
+      "availableTimes": ["2026-10-24T10:00:00+08:00", "2026-10-25T14:00:00+08:00"]
+    }
+  ]
+}
