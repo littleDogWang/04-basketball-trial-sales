@@ -215,3 +215,7 @@ Released under the [MIT License](./LICENSE).
 Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
 
 TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.
+
+## U.S. example data
+
+The fictional academy is in Austin, Texas. Course records include location and `America/Chicago`; October trial times use CDT (`-05:00`). Prompts, course tool results and saved-result/history labels use the same course time zone.

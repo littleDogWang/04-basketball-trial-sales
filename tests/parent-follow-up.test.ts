@@ -15,7 +15,7 @@ const originalDirectory = process.env.TOP_TEN_DATA_DIR;
 beforeEach(() => { Date.now = () => Date.parse('2026-10-16T00:00:00Z'); directory = fs.mkdtempSync(path.join(os.tmpdir(), 'parent-follow-up-')); process.env.TOP_TEN_DATA_DIR = directory; });
 afterEach(() => { Date.now = originalNow; if (originalDirectory === undefined) delete process.env.TOP_TEN_DATA_DIR; else process.env.TOP_TEN_DATA_DIR = originalDirectory; fs.rmSync(directory, { recursive: true, force: true }); });
 const details = { outcome: 'incomplete', experience: 'No prior lessons', goals: 'Build confidence', preferred_times: 'Saturday morning', summary: 'The parent is interested in a beginner trial.' };
-const trial = { course_id: 'BASKET-8-12-BEGINNER', preferred_time: '2026-10-24T10:00:00+08:00', consent: true, summary: 'Parent agreed to the Saturday beginner trial request.' };
+const trial = { course_id: 'BASKET-8-12-BEGINNER', preferred_time: '2026-10-24T10:00:00-05:00', consent: true, summary: 'Parent agreed to the Saturday beginner trial request.' };
 function post(pathname: string, body: unknown) { return new Request(`http://localhost/api/scenarios/07-basketball-trial-sales/${pathname}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
 
 test('an existing lead starts with honest incomplete progress and retains collected details after process restart', () => {
@@ -30,14 +30,14 @@ test('trial request and result save together; repeats preserve the request ID ev
  const saved = requestTrial(id, trial); assert.equal(saved.result.outcome, 'trial_requested'); assert.equal(saved.request.status, 'request_received');
  assert.equal(getFollowUp(id).trial_request?.request_id, saved.request.request_id);
  endFollowUp(id); const retry = requestTrial(id, trial); assert.equal(retry.duplicate, true); assert.equal(retry.request.request_id, saved.request.request_id);
- assert.throws(() => requestTrial(id, { ...trial, preferred_time: '2026-10-25T14:00:00+08:00' }), /different trial/);
+ assert.throws(() => requestTrial(id, { ...trial, preferred_time: '2026-10-25T14:00:00-05:00' }), /different trial/);
 });
 test('requests require explicit agreement, collected needs, and a configured eligible time', () => {
  const { session_id: id } = createFollowUp('PARENT-1042');
  assert.throws(() => requestTrial(id, { ...trial, consent: false }), /agreement/);
  assert.throws(() => requestTrial(id, trial), /experience/); saveFollowUp(id, details);
  assert.throws(() => requestTrial(id, { ...trial, contact: 'invalid-contact' }), /usable/);
- assert.throws(() => requestTrial(id, { ...trial, preferred_time: '2026-10-24T11:00:00+08:00' }), /unavailable/);
+ assert.throws(() => requestTrial(id, { ...trial, preferred_time: '2026-10-24T11:00:00-05:00' }), /unavailable/);
  saveFollowUp(id, { outcome: 'incomplete', child_age: 7 }); assert.throws(() => requestTrial(id, trial), /unavailable/);
  assert.equal(getFollowUp(id).trial_request, undefined);
 });
