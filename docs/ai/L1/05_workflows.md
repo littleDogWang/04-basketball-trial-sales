@@ -108,3 +108,7 @@ Bootstrap behavior:
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Full runtime sequence for bootstrap and teardown tasks.
 - [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) — Baseline implementation checklist for recipe consumers.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Required checks when editing transcript flow.
+
+## Scenario 07 follow-up results
+
+Start parent follow-up from the scenario Dialog. A saved incomplete result precedes token/invite; invite receives its session_id. Configure TOP_TEN_SCENARIO_TOOL_BASE_URL to a cloud-reachable origin of this app. End preserves the last durable conclusion and displays it; retry failed finalization in the same session. Run pnpm run test:follow-up for isolated persistence/consent/outcome tests.

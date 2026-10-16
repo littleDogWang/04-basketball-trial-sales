@@ -515,8 +515,8 @@ export default function ConversationComponent({
               onToggle={handleMicToggle}
               className="overflow-visible"
               aria-label={isEnabled ? 'Mute microphone' : 'Unmute microphone'}
-              enabledColor="hsl(var(--primary))"
-              disabledColor="hsl(var(--destructive))"
+              enabledColor="var(--primary)"
+              disabledColor="var(--destructive)"
             />
           </div>
           <MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />

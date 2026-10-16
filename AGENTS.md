@@ -2,6 +2,22 @@
 
 This guide is for coding agents making changes in `agent-quickstart-nextjs`.
 
+## Shared scenario UI requirements
+
+These three requirements apply to every scenario and are mandatory for UI implementation and acceptance:
+
+1. **Use a scenario-specific initial Dialog**: its title, description, primary action, loading/error messages and accessibility labels must explain the current scenario. Use a task-specific action instead of a generic Start Conversation entry.
+2. **Keep the scenario identity visible**: after closing the initial Dialog, the scenario name, identifier and short purpose must remain visible in the desktop and mobile interface. Activity status must not replace the scenario name.
+3. **Use our UIkit components**: adopt actual component source and the accompanying theme/styles from [shczhen/agent-ui](https://github.com/shczhen/agent-ui), connected to real session data and actions. A visual imitation or continued use of the previous UIkit alone does not satisfy this requirement.
+
+Inspect the rendered initial Dialog and main interface, and verify actual UIkit component usage. Each scenario plan specifies its own copy, identity and component mapping.
+
+The shared specification lives at `scenario-repos/SCENARIO_UI_RULES.md` in the workspace (`../SCENARIO_UI_RULES.md` relative to this file). This section contains all three minimum requirements and remains usable when the repository is cloned independently. Synchronize this section across repositories when shared rules change. Identify the 00 base scenario as a basic voice demo.
+
+## Repository language
+
+Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
+
 ## How to Load
 
 This repository uses progressive disclosure documentation. Docs live under `docs/ai/` in three levels.
@@ -219,3 +235,18 @@ Before finishing a change:
 | fix docs        | Close findings from a docs review or test run                |
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
+
+## Scenario 07 result workflow
+
+The authoritative local business design is `scenarios/07-basketball-trial-sales/design.md`. Preserve stable lead/session identity and explicit parent agreement. `results.ts` owns the local durable file store and atomically links trial requests to follow-up results. `request_received` is not booking confirmation.
+
+`LandingPage` creates the result before voice startup, passes its ID to invite-agent, polls results while live, and finalizes without changing the supported business conclusion. Agent tools are session-bound. Missing or local-only `TOP_TEN_SCENARIO_TOOL_BASE_URL` must permit local-data discussion without tool writes. Do not derive business conclusions from transcript keywords.
+
+Use `pnpm run test:follow-up` for the result workflow; `pnpm run verify` includes it. Test data must use a temporary `TOP_TEN_DATA_DIR`. The file store targets one local Node.js process on durable disk. Keep acceptance screenshots and synthetic records local. UI source adaptations are documented in `styles/agent-ui/PROVENANCE.md`.
+
+
+## Local conversation and optional tools
+
+Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

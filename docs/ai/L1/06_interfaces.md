@@ -99,3 +99,14 @@ From `types/conversation.ts` (high-use):
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — How route contracts are used in sequence.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Event-level contract mapping.
+
+## Scenario 07 follow-up results
+
+Scenario 07 invite additionally requires session_id. POST sessions accepts lead_id; GET/POST sessions/:id reads/ends that result. GET results supports lead_id. POST results and requests require the session_id query parameter fixed into server-generated tool URLs. See scenarios/07-basketball-trial-sales/README.md for payloads. Trial submission returns a received request and linked result, never booking confirmation.
+
+
+## Local conversation and optional tools
+
+Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

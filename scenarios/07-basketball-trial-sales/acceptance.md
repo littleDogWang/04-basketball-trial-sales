@@ -1,23 +1,14 @@
-# 少儿篮球试课推销验收标准
+# Parent trial follow-up acceptance
 
-## 必须通过
+- The initial Dialog identifies scenario 07, the existing inquiry, the parent's role, and the intended result. Identity remains visible after closing it on desktop/mobile.
+- The agent uses actual lead context and does not repeat known details unnecessarily.
+- Age eligibility, experience, goals, preferences and submission agreement are checked before an eligible trial request.
+- A received request has a stable ID and exact configured course/time; it is shown as awaiting advisor confirmation. Repeating the same submission preserves its ID.
+- No-request outcomes are saved: follow-up needed (with agreement), not interested, not eligible, do not contact, wrong contact, incomplete.
+- Child experience and goals remain in the saved result and are visible to the next advisor.
+- Reloading and a new Node.js process can retrieve the same result. Ending cannot downgrade a received request or manufacture missing answers.
+- Save failures remain failures; a corrupt store is not silently replaced. Request and result writes are atomic.
+- History can reopen earlier results for the original lead.
+- Missing cloud callback configuration prevents voice startup; local UI/API acceptance must be distinguished from live voice/tool invocation.
 
-- Agent 能收集年龄、目标和时间偏好。
-- 不符合条件时不强行承诺报名。
-- 有合适时段时提交预约请求并返回请求 ID。
-- 没有时段时保留线索并转人工。
-- 预约请求未确认时不能说“课程已预约”。
-
-## 推荐用例
-
-1. 符合条件并提交试课请求。
-2. 年龄不符合课程范围。
-3. 没有可用时间。
-4. 用户改变时间偏好。
-5. 提交接口失败。
-
-## 证据
-
-- 线索和预约请求记录。
-- 请求 ID、失败状态和 transcript。
-- 模拟外呼流程截图或录音。
+Run `pnpm run verify` (including `test:follow-up`). Screenshots and synthetic acceptance records stay local and are not business-conversion evidence.

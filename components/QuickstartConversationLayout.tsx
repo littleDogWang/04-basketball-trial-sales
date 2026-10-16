@@ -34,7 +34,7 @@ export function QuickstartConversationLayout({
           />
           <div className="flex min-w-0 flex-col justify-center gap-1">
             <span className="truncate text-lg font-semibold leading-none tracking-[-0.025em] text-foreground">
-              Agora Conversational AI
+              Parent trial follow-up · 07
             </span>
             {pipelineMetrics}
           </div>
@@ -47,10 +47,10 @@ export function QuickstartConversationLayout({
             size="sm"
             className="h-8 rounded-md border border-destructive bg-transparent px-3 text-xs font-medium text-destructive hover:bg-destructive/10"
             onClick={onEndConversation}
-            aria-label="End conversation with AI agent"
+            aria-label="End parent follow-up"
             title="End conversation"
           >
-            End Conversation
+            End follow-up
           </Button>
         </div>
       </header>

@@ -3,6 +3,12 @@
 import { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FollowUpResultPanel } from './FollowUpResultPanel';
+import { parentLead } from '@/scenarios/07-basketball-trial-sales/leads';
+import { outcomeLabels } from '@/scenarios/07-basketball-trial-sales/result-types';
+import { followUpApi, useFollowUps } from '@/hooks/use-follow-ups';
 import type { RTMClient } from 'agora-rtm';
 import type {
   AgoraTokenData,
@@ -56,6 +62,10 @@ const AgoraProvider = dynamic(
 
 export default function LandingPage() {
   const [showConversation, setShowConversation] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(true);
+  const followUps = useFollowUps(showConversation);
+  const pendingSession = useRef<string | null>(null);
+  const [finalizeFailed, setFinalizeFailed] = useState(false);
 
   // Preload heavy modules on mount so they're already cached when the user
   // clicks "Try it Now" — eliminates the ~1.8s dynamic-import delay.
@@ -67,14 +77,21 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const [agoraData, setAgoraData] = useState<AgoraTokenData | null>(null);
   const [rtmClient, setRtmClient] = useState<RTMClient | null>(null);
-  const [agentJoinError, setAgentJoinError] = useState(false);
 
   const handleStartConversation = async () => {
     setIsLoading(true);
     setError(null);
-    setAgentJoinError(false);
+
 
     try {
+      if (!pendingSession.current) {
+        const response = await fetch(`${followUpApi}/sessions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: parentLead.lead_id }) });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error);
+        pendingSession.current = body.result.session_id;
+        followUps.select(body.result.session_id);
+        await followUps.reload();
+      }
       // 1. Fetch RTC token + channel
       // console.log('Fetching Agora token...');
       const agoraResponse = await fetch('/api/generate-agora-token');
@@ -90,7 +107,7 @@ export default function LandingPage() {
       // 2. Run agent invite and RTM setup in parallel — both only need the token response.
       //    RTM must be ready before ConversationComponent mounts so AgoraVoiceAI
       //    can subscribe immediately. Agent invite is non-fatal.
-      const [agentData, rtm] = await Promise.all([
+      const setup = await Promise.allSettled([
         // 2a. Start the AI agent
         fetch('/api/invite-agent', {
           method: 'POST',
@@ -98,19 +115,13 @@ export default function LandingPage() {
           body: JSON.stringify({
             requester_id: responseData.uid,
             channel_name: responseData.channel,
+            session_id: pendingSession.current!,
           } as ClientStartRequest),
         })
           .then(async (res) => {
-            if (!res.ok) {
-              setAgentJoinError(true);
-              return null;
-            }
-            return res.json() as Promise<AgentResponse>;
-          })
-          .catch((err) => {
-            console.error('Failed to start conversation with agent:', err);
-            setAgentJoinError(true);
-            return null;
+            const body = await res.json();
+            if (!res.ok) throw new Error(body.error || 'Could not connect to the follow-up advisor.');
+            return body as AgentResponse;
           }),
 
         // 2b. Set up RTM (dynamically imported to keep it client-only)
@@ -127,12 +138,20 @@ export default function LandingPage() {
         })(),
       ]);
 
+      if (setup[0].status === 'rejected' || setup[1].status === 'rejected') {
+        if (setup[1].status === 'fulfilled') await setup[1].value.logout().catch(() => {});
+        if (setup[0].status === 'fulfilled') await fetch('/api/stop-conversation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent_id: setup[0].value.agent_id }) });
+        throw setup[0].status === 'rejected' ? setup[0].reason : setup[1].status === 'rejected' ? setup[1].reason : new Error('Connection failed');
+      }
+      const agentData = setup[0].value;
+      const rtm = setup[1].value;
+      setDialogOpen(false);
       // 3. All dependencies ready — store state and show conversation
       setRtmClient(rtm);
       setAgoraData({ ...responseData, agentId: agentData?.agent_id });
       setShowConversation(true);
     } catch (err) {
-      setError('Failed to start conversation. Please try again.');
+      setError(err instanceof Error ? err.message : 'Could not start parent follow-up. Please retry.');
       console.error('Error starting conversation:', err);
     } finally {
       setIsLoading(false);
@@ -176,6 +195,22 @@ export default function LandingPage() {
     [agoraData],
   );
 
+  const finalizeResult = async () => {
+    const id = pendingSession.current || followUps.activeSession;
+    if (!id) return;
+    try {
+      const response = await fetch(`${followUpApi}/sessions/${id}`, { method: 'POST' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error);
+      setFinalizeFailed(false);
+      pendingSession.current = null;
+      await followUps.reload();
+    } catch (error) {
+      setFinalizeFailed(true);
+      setError(error instanceof Error ? error.message : 'Could not finalize this follow-up. Retry saving.');
+    }
+  };
+
   const handleEndConversation = async () => {
     // Stop the AI agent
     if (agoraData?.agentId) {
@@ -199,88 +234,20 @@ export default function LandingPage() {
     rtmClient?.logout().catch((err) => console.error('RTM logout error:', err));
     setRtmClient(null);
     setShowConversation(false);
+    await finalizeResult();
   };
 
-  return (
-    <div className="relative flex h-dvh min-h-screen flex-col overflow-hidden bg-background text-foreground">
-      {/* Hero shell: either shows the pre-call CTA or swaps in the live conversation experience. */}
-      <div
-        className={`flex min-h-0 flex-1 flex-col ${
-          showConversation
-            ? 'items-stretch justify-start'
-            : 'items-center justify-center'
-        }`}
-      >
-        <div
-          className={`z-10 flex min-h-0 flex-1 flex-col ${
-            showConversation
-              ? 'h-full w-full max-w-none items-stretch gap-0 px-0 text-left'
-              : 'w-full max-w-none items-center justify-center px-4 text-center'
-          }`}
-        >
-          {!showConversation ? (
-            <QuickstartPreCallCard
-              isLoading={isLoading}
-              error={error}
-              onStartConversation={handleStartConversation}
-            />
-          ) : agoraData && rtmClient ? (
-            <>
-              {/* Non-fatal invite warning: the browser session can still render even if agent start failed. */}
-              {agentJoinError && (
-                <div className="p-3 bg-destructive/10 rounded-md text-destructive text-sm max-w-sm">
-                  Failed to connect with AI agent. The conversation may not work
-                  as expected.
-                </div>
-              )}
-              {/* Browser-only conversation mount: RTC provider, error boundary, and lazy-loaded call UI. */}
-              <Suspense fallback={<LoadingSkeleton />}>
-                <ErrorBoundary>
-                  <AgoraProvider>
-                    <ConversationComponent
-                      agoraData={agoraData}
-                      rtmClient={rtmClient}
-                      onTokenWillExpire={handleTokenWillExpire}
-                      onEndConversation={handleEndConversation}
-                    />
-                  </AgoraProvider>
-                </ErrorBoundary>
-              </Suspense>
-            </>
-          ) : (
-            /* Fallback if session bootstrap partially succeeded but required state is missing. */
-            <p className="text-sm text-muted-foreground">
-              Failed to load conversation data.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Persistent attribution footer for the pre-call and in-call views. */}
-      <footer className="fixed bottom-0 right-0 z-40 py-4 pr-4 md:py-6 md:pr-6">
-        <div className="flex items-center justify-end gap-2 text-muted-foreground">
-          <span className="text-xs font-medium tracking-wide uppercase">
-            Powered by
-          </span>
-          <a
-            href="https://agora.io/en/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-primary transition-colors"
-            aria-label="Visit Agora's website"
-          >
-            <Image
-              src="/agora-logo-rgb-blue.svg"
-              alt="Agora"
-              width={86}
-              height={24}
-              priority
-              className="h-6 w-auto hover:opacity-80 transition-opacity translate-y-1"
-            />
-            <span className="sr-only">Agora</span>
-          </a>
-        </div>
-      </footer>
-    </div>
-  );
+  const selectedResult = followUps.results.find(result => result.session_id === followUps.activeSession);
+  return <div className="trial-workspace">
+    <header className="trial-header"><div className="trial-brand"><Image src="/agora-logo-mark.svg" alt="Agora" width={32} height={32} /><div><div className="trial-title-row"><h1>Parent trial follow-up</h1><Badge variant="outline">07</Badge></div><p>Existing inquiry → qualified interest → trial request</p></div></div><Badge variant="secondary">{showConversation ? 'Follow-up in progress' : 'Northside Basketball Academy'}</Badge></header>
+    <main className="trial-main">
+      {!showConversation && <div className="workspace-intro"><div><span className="eyebrow">EVERY INQUIRY DESERVES A NEXT STEP</span><h2>From interest to a trial request.</h2><p>Speak with Riley as a parent. Discuss the family’s needs, decision, and next step. Connected tools can save the agreed outcome.</p></div><Button onClick={() => setDialogOpen(true)} disabled={finalizeFailed}>Start parent follow-up</Button></div>}
+      {(error || followUps.loadError) && <div role="alert" className="workspace-error"><p>{error || followUps.loadError}</p><Button variant="outline" onClick={() => { if (finalizeFailed) { setError(null); void finalizeResult(); } else { void followUps.reload(); } }}>{finalizeFailed ? 'Retry saving this follow-up' : 'Reload saved results'}</Button></div>}
+      {showConversation && agoraData && rtmClient && <div className="trial-call"><Suspense fallback={<LoadingSkeleton />}><ErrorBoundary><AgoraProvider><ConversationComponent agoraData={agoraData} rtmClient={rtmClient} onTokenWillExpire={handleTokenWillExpire} onEndConversation={handleEndConversation} /></AgoraProvider></ErrorBoundary></Suspense></div>}
+      <div className="trial-grid"><aside className="follow-up-card lead-card"><span className="eyebrow">EXISTING PARENT INQUIRY</span><div className="parent-avatar">AM</div><h2>{parentLead.parent_name}</h2><p>{parentLead.contact}</p><Badge variant="secondary">{parentLead.lead_id}</Badge><dl className="result-fields"><div><dt>Source</dt><dd>{parentLead.source}</dd></div><div><dt>Interested in</dt><dd>{parentLead.interest}</dd></div><div><dt>Child’s age</dt><dd>{parentLead.child_age} years</dd></div></dl><div className="next-action"><span className="eyebrow">THE GOAL</span><p>Check interest, find a suitable trial, and discuss what happens next.</p></div><p className="small-note">Fictional inquiry for this experience. Previously supplied details do not need to be asked again.</p></aside><FollowUpResultPanel result={selectedResult} /></div>
+      <section className="history-section"><div className="result-heading"><div><span className="eyebrow">COURSE ADVISOR VIEW</span><h2>Saved follow-ups</h2></div><Button size="sm" variant="outline" onClick={() => { void followUps.reload(); }}>Refresh results</Button></div><p className="small-note">Open a record to review the family’s needs and next step. Records remain available after reloading.</p>{!followUps.loaded ? <p role="status">Loading saved follow-ups…</p> : followUps.results.length === 0 ? <div className="history-empty">No saved follow-ups yet.</div> : <div className="history-list">{followUps.results.map(result => <button key={result.session_id} type="button" disabled={showConversation} aria-pressed={followUps.activeSession === result.session_id} className="history-item" onClick={() => followUps.select(result.session_id)}><div><strong>{outcomeLabels[result.outcome]}</strong><p>{result.summary}</p></div><span>{new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' }).format(new Date(result.created_at))} · Shanghai</span></button>)}</div>}</section>
+    </main>
+    <footer className="trial-footer">Powered by Agora · Trial requests require advisor confirmation.</footer>
+    <QuickstartPreCallCard open={dialogOpen && !showConversation} onOpenChange={setDialogOpen} isLoading={isLoading} error={error} enabled={followUps.loaded && !followUps.loadError && !finalizeFailed} toolsReady={followUps.toolsReady} onStartConversation={handleStartConversation} />
+  </div>;
 }

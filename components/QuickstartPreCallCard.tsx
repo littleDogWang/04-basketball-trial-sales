@@ -1,55 +1,19 @@
 'use client';
-
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-type QuickstartPreCallCardProps = {
-  isLoading: boolean;
-  error: string | null;
-  onStartConversation: () => void;
-};
-
-export function QuickstartPreCallCard({
-  isLoading,
-  error,
-  onStartConversation,
-}: QuickstartPreCallCardProps) {
-  return (
-    <div
-      className="mx-auto flex w-[min(92vw,26.25rem)] animate-fade-up flex-col items-center rounded-[20px] border border-[#2b2b2b] px-10 py-10 text-center shadow-[0_10px_24px_rgba(0,0,0,0.28)]"
-      style={{
-        backgroundImage:
-          'linear-gradient(164.988deg, rgba(54,54,54,0.2) 1.0596%, rgba(0,0,0,0) 96.089%), linear-gradient(90deg, rgb(16,16,16) 0%, rgb(16,16,16) 100%)',
-      }}
-    >
-      <h1 className="text-[28px] font-medium leading-[1.2] text-white">
-        Try Agora&apos;s Voice Agent
-      </h1>
-      <p className="mt-[14px] text-sm font-medium leading-6 text-muted-foreground">
-        Built on Agora&apos;s flagship Conversational AI engine, for effortless
-        agentic conversations.
-      </p>
-
-      <Button
-        onClick={onStartConversation}
-        disabled={isLoading}
-        className="mt-12 h-10 w-full rounded-lg border border-primary bg-primary text-sm font-medium text-black hover:border-white hover:bg-white hover:text-black disabled:hover:border-primary disabled:hover:bg-primary disabled:hover:text-black"
-        aria-label={
-          isLoading
-            ? 'Starting conversation with AI agent'
-            : 'Start conversation with AI agent'
-        }
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Starting...
-          </>
-        ) : (
-          'Start Conversation'
-        )}
-      </Button>
-      {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
-    </div>
-  );
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { parentLead } from '@/scenarios/07-basketball-trial-sales/leads';
+type Props = { open: boolean; onOpenChange: (open: boolean) => void; isLoading: boolean; error: string | null; enabled: boolean; toolsReady: boolean; onStartConversation: () => void };
+export function QuickstartPreCallCard({ open, onOpenChange, isLoading, error, enabled, toolsReady, onStartConversation }: Props) {
+  return <Dialog open={open} onOpenChange={value => { if (!isLoading) onOpenChange(value); }}>
+    <DialogContent className="trial-dialog" showCloseButton={!isLoading}>
+      <DialogHeader><Badge variant="outline">SCENARIO 07 · PARENT FOLLOW-UP</Badge><DialogTitle className="trial-dialog-title">Turn an inquiry into<br />a first step on court.</DialogTitle><DialogDescription>Follow up with a parent who asked about a basketball trial. Understand their needs, find a suitable class, and discuss the next step.</DialogDescription></DialogHeader>
+      <div className="dialog-lead"><span className="eyebrow">YOU ARE THE PARENT</span><h3>{parentLead.parent_name}</h3><p>Your child is {parentLead.child_age}. You asked about a beginner trial through the academy website. Tell Riley what you’re looking for and when you’re available.</p></div>
+      <Button onClick={onStartConversation} disabled={isLoading || !enabled} className="w-full" aria-label={isLoading ? 'Connecting to the parent follow-up advisor' : 'Start parent follow-up'}>{isLoading ? <Loader2 className="animate-spin" /> : <Mic />}{isLoading ? 'Connecting to Riley…' : 'Start parent follow-up'}</Button>
+      {!enabled && <p className="small-note" role="status">Preparing the follow-up. Resolve any loading or saving error before starting.</p>}
+      {error && <p role="alert" className="error-message">{error}</p>}
+      <p className="small-note">Enable your microphone. This practice uses a fictional inquiry and fixed trial times. {toolsReady ? 'Connected tools can save a request; the academy must still confirm it.' : 'You can discuss courses and preferences. Answers and trial requests cannot be saved during this call.'}</p>
+    </DialogContent>
+  </Dialog>;
 }

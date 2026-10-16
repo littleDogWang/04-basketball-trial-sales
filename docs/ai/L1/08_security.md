@@ -94,3 +94,7 @@ Re-audit security docs when any of these change:
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Token issuance and renewal sequence details.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — RTM event surfaces and error propagation boundaries.
+
+## Scenario 07 follow-up results
+
+Parent lead fixtures are fictional. The sample result APIs are unauthenticated and are not a real CRM. Use application authentication and access control before storing real family data. Session IDs are server-created and file names validate UUID format; atomic local JSON files use owner-only permissions. Read/write failures must not overwrite a corrupt store or be shown as successful handoffs.

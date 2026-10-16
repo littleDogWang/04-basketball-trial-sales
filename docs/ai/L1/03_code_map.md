@@ -87,3 +87,7 @@ types/               Shared TypeScript route/component contracts
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Cross-file call path during start/stop.
 - [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) — Official baseline map for recreating the quickstart recipe.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Mapping and rendering flow from toolkit events.
+
+## Scenario 07 follow-up results
+
+`scenarios/07-basketball-trial-sales/{leads,result-types,results,http}.ts` own lead context, result contracts, file persistence/validation, and HTTP error mapping. `app/api/scenarios/07-basketball-trial-sales` owns sessions, results, requests and course lookup. `hooks/use-follow-ups.ts` loads and polls history; `FollowUpResultPanel` renders actual saved records. `styles/agent-ui` records component/style provenance.

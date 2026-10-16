@@ -81,3 +81,14 @@ Do not recreate Agora ConvoAI integration from memory. Provider schemas, SDK bui
 3. Run `pnpm run doctor` and `pnpm run dev`.
 4. Validate with `pnpm run verify` before sharing modifications.
 5. Customize agent behavior and UI using the supported surfaces above.
+
+## Scenario 07 customization
+
+This checkout adds existing-parent inquiry context, session-bound tools, and durable local follow-up results without changing the RTC/RTM ownership invariants. Invite additionally requires the follow-up session ID. TOP_TEN_SCENARIO_TOOL_BASE_URL enables cloud-to-app tools; TOP_TEN_DATA_DIR selects persistent local result storage. See the scenario README for the additional routes and limits.
+
+
+## Local conversation and optional tools
+
+Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

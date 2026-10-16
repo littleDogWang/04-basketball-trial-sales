@@ -84,3 +84,7 @@ Pass `rtmEngine` directly to `AgoraVoiceAI.init`; the nested `rtmConfig` is no l
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Start/stop race and lifecycle ownership details.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Transcript edge cases and failure surfaces.
+
+## Scenario 07 follow-up results
+
+Do not use a process-local Map for parent results, convert an incomplete session into a successful trial, or infer consent from interest. Missing tool callback configuration selects local-data discussion without Agent writes. HTTP tests and synthetic UI records do not establish real cloud invocation. A persistent local file store does not supply multi-process/serverless persistence.

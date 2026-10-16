@@ -1,10 +1,20 @@
-# Agora Conversational AI Next.js Quickstart
+# Parent trial follow-up · Scenario 07
 
 [![Build](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs/actions/workflows/build-check.yml/badge.svg)](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs/actions/workflows/build-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
 
 Build a production-style voice agent in minutes with Next.js and the Agora Conversational AI Engine, including voice agent visualizer ([Agent UIKit](https://agoraio-conversational-ai.github.io/agent-uikit/)), live transcript, and real-time pipeline latency via `AGENT_METRICS` ([Agent Toolkit](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-ts)).
+
+## Scenario workflow
+
+Follow up with an existing parent inquiry, understand the child's needs, and submit an agreed trial request. With connected tools, each session saves an advisor-readable result, including requests, declines, callback preferences, and incomplete conversations. Without tools, it provides local course advice and a verbal summary. The home page includes the parent context, result receipt, and saved history. This experience uses fictional family/course data.
+
+See [scenario details](scenarios/07-basketball-trial-sales/README.md), [design](scenarios/07-basketball-trial-sales/design.md), and [acceptance](scenarios/07-basketball-trial-sales/acceptance.md). Voice tools require `TOP_TEN_SCENARIO_TOOL_BASE_URL` set to this app's public HTTPS origin. Missing configuration permits local-data conversation without saving spoken answers or submitting a request. Localhost cannot receive cloud tool calls.
+
+Results use `.scenario-data/07-basketball-trial-sales` by default; set `TOP_TEN_DATA_DIR` to another persistent local directory if needed. Use a shared durable store for multiple processes or ephemeral hosting; these sample routes have no user authentication and must not contain real family data. `request_received` means a request was saved, not a confirmed booking or notified advisor.
+
+The UI uses agent-ui source and theme styles; [provenance](styles/agent-ui/PROVENANCE.md) records the adaptation. Existing quickstart setup below supplies the RTC/RTM baseline.
 
 ## Prerequisites
 
@@ -52,7 +62,7 @@ Getting started is quick and easy: install the CLI _(skip if you already have it
    pnpm dev
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) and click **Start conversation**.
+3. Open [http://localhost:3000](http://localhost:3000) and click **Start parent follow-up**.
 
 If the agent does not join or transcripts do not appear, run **`agora project doctor --deep`** to check credentials, feature enablement, network reachability, and local env binding.
 
@@ -198,3 +208,10 @@ Please do **not** open public issues for security reports. Email security@agora.
 ## License
 
 Released under the [MIT License](./LICENSE).
+
+
+## Local conversation and optional tools
+
+Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

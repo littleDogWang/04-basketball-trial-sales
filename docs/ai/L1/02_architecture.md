@@ -101,3 +101,7 @@ Agora Cloud
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Detailed bootstrapping and teardown timeline.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Event mapping, UID remap, in-progress/completed segmentation.
+
+## Scenario 07 follow-up results
+
+Scenario 07 adds a server-created parent follow-up session before voice startup. The invite route scopes tools and existing lead context to that session. The scenario file store atomically persists result/request JSON; the UI polls while live and rereads on end. It is a single-process local store, not multi-instance persistence.
