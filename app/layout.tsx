@@ -1,16 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { UiProviders } from '@/components/UiProviders';
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
-  title: 'Parent trial follow-up | Agora',
-  description:
-    "Next.js quickstart: real-time voice agent with live transcript, streaming audio, and low latency from Agora's Conversational AI Engine—API routes in one repo.",
+  title: 'Parent Trial Follow-up | Agora',
+  description: 'Discuss your family’s needs with Riley and find a suitable basketball trial.',
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -39,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="h-full min-h-screen">{children}</body>
+    <html lang="en-US" className="h-full dark">
+      <body className="h-full min-h-screen"><UiProviders>{children}</UiProviders></body>
     </html>
   );
 }

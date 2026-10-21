@@ -219,3 +219,7 @@ TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public
 ## U.S. example data
 
 The fictional academy is in Austin, Texas. Course records include location and `America/Chicago`; October trial times use CDT (`-05:00`). Prompts, course tool results and saved-result/history labels use the same course time zone.
+
+## Interface
+
+The interface follows scenario 01: task-specific entry and welcome, persistent scenario identity, activity canvas, transcript and Glass voice controls. Inspector shows actual session evidence; Build provides this repository’s setup commands. Business results retain their original contracts and appear below the voice workspace. Edit `scenarios/07-basketball-trial-sales/presentation.ts` for scenario copy. Styling uses Tailwind 4/PostCSS and the vendored theme; see `styles/agent-ui/PROVENANCE.md`. Local checks and browser rendering do not establish live voice/cloud-tool acceptance.

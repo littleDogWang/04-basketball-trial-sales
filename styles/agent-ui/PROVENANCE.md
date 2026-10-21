@@ -1,8 +1,9 @@
-# agent-ui source provenance
+# Agent UI source provenance
 
-Source: https://github.com/shczhen/agent-ui
-Archive revision: 29d3aa3ed9e1a4d2cd5fcc1747689e3bc2915e2d.
+Source: https://github.com/shczhen/agent-ui, Agora Glass system.
 
-Copied from the inspected 01-it-support adaptation in this workspace on 2026-10-16: Dialog, Button, Badge, control-light, tokens, recipes, Crystal/Obsidian theme, and MiSans font files. Button and Badge retain upstream source with Slot imports mapped to the existing dependency. Dialog retains the source composition and styles, with the Radix primitive replaced by a native modal dialog (focus trapping, Escape, and focus restoration) to avoid a new dependency; Tailwind 4 theme/source directives are mapped to the existing Tailwind 3 configuration instead of migrating the app. Recipe layer wrappers are flattened for Tailwind 3 imports. The live entry, actions, and result statuses use these components.
+Copied from the actual vendored components and theme in scenario 01 on 2026-10-21. Scenario 01 records its original adoption at revision `29d3aa3ed9e1a4d2cd5fcc1747689e3bc2915e2d`; no fresh upstream revision or license audit is claimed.
 
-MiSans attribution is in public/fonts/README.md. The inspected upstream archive had no root license; no additional component redistribution license is asserted here.
+Reused source includes Dialog, Tabs, Button, Alert, Message, Bubble, Tooltip, Empty, Status, VoiceDock, GlassSurface, ConversationPanel, control-light, theme tokens and recipes. The application-owned AgentSignal canvas uses semantic state and measured track amplitude.
+
+Adaptations: scenario-specific content and start actions; real session callbacks, microphone/device selection, live transcript and Inspector. The Tailwind 4/PostCSS configuration and MiSans font assets match scenario 01. Existing repository licenses and font notices remain in place.

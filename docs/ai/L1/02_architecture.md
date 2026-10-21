@@ -105,3 +105,7 @@ Agora Cloud
 ## Scenario 07 follow-up results
 
 Scenario 07 adds a server-created parent follow-up session before voice startup. The invite route scopes tools and existing lead context to that session. The scenario file store atomically persists result/request JSON; the UI polls while live and rereads on end. It is a single-process local store, not multi-instance persistence.
+
+## Scenario 01 UI alignment (2026-10-21)
+
+`ScenarioShell` and `useScenarioUi` compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `scenarios/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. Business views remain scenario-owned below the voice workspace. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `scenarios/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.

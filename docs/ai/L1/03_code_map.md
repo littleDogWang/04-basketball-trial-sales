@@ -40,7 +40,7 @@ types/               Shared TypeScript route/component contracts
 
 - `scripts/verify-api-contracts.ts`: imports route handlers and validates contract behavior.
 - `scripts/doctor.mjs`: local setup checks consumed by `pnpm run doctor`.
-- `tailwind.config.ts`: includes `agora-agent-uikit` dist classes in content scan.
+- `app/globals.css`: Tailwind 4 @source includes the installed UIKit classes.
 
 ## Fast File Lookup
 
@@ -67,7 +67,7 @@ types/               Shared TypeScript route/component contracts
 
 - `public/*`: icons, logos, and heading SVG assets used in pre-call/in-call experience.
 - `app/globals.css` and `styles/globals.css`: baseline theme/layout styles.
-- `tailwind.config.ts`: utility class scan and theme extension.
+- `app/globals.css`: Tailwind 4 CSS source scanning and semantic theme roles.
 
 ## Verification Path Mapping
 
@@ -91,3 +91,7 @@ types/               Shared TypeScript route/component contracts
 ## Scenario 07 follow-up results
 
 `scenarios/07-basketball-trial-sales/{leads,result-types,results,http}.ts` own lead context, result contracts, file persistence/validation, and HTTP error mapping. `app/api/scenarios/07-basketball-trial-sales` owns sessions, results, requests and course lookup. `hooks/use-follow-ups.ts` loads and polls history; `FollowUpResultPanel` renders actual saved records. `styles/agent-ui` records component/style provenance.
+
+## Scenario 01 UI alignment (2026-10-21)
+
+`ScenarioShell` and `useScenarioUi` compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `scenarios/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. Business views remain scenario-owned below the voice workspace. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `scenarios/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
