@@ -1,116 +1,47 @@
 # 06 Interfaces
 
-> Contracts at repo boundaries: API routes, env vars, runtime events, and shared TypeScript payloads.
+> Actual scenario API, event and configuration boundaries.
 
-## HTTP Route Contracts
+## Browser Or User-Facing APIs
 
-### `GET /api/generate-agora-token`
+- `GET /api/generate-agora-token`: optional uid/channel; returns `{ token, uid, channel }`; server credential/configuration errors return failure.
+- `POST /api/invite-agent`: requester/channel are required. The invite additionally requires the server-created follow-up `session_id`. The supplied page creates it; do not generate one in the model. Returns Agent ID, creation time and state; input and runtime failures are reported explicitly.
+- `POST /api/stop-conversation`: requires agent_id; already-stopping/not-found handling is idempotent.
+- `POST /api/chat/completions`: optional custom-LLM proxy, not used by the default managed pipeline.
 
-Query params:
+`find_trial_courses` reads configured courses. `save_follow_up_result` saves confirmed facts and supported outcomes. `submit_trial_request` requires saved context, an eligible exact time and explicit consent, and writes the request together with its linked result. Invite receives `session_id`; tool URLs fix that session server-side.
 
-- `uid` optional; invalid/zero resolves to random RTM-safe UID.
-- `channel` optional; defaults to generated `ai-conversation-<ts>-<rand>`.
+The prompt includes course data and parent inquiry context. A local incomplete session/history record is created, but spoken answers, trial requests and advisor notifications are not saved by the Agent.
 
-Success response:
+Session-bound course lookup, follow-up saving and trial-request submission update the local result store. A received request remains pending advisor confirmation.
 
-```json
-{ "token": "...", "uid": "1234", "channel": "ai-conversation-..." }
-```
+Use the scenario-specific entry and persistent identity; starting voice requires a user action.
 
-Failure response: `{ "error": string, "details"?: string }` with `500`.
 
-### `POST /api/invite-agent`
 
-Body (`ClientStartRequest`):
+See [scenario guide](../../../scenarios/07-basketball-trial-sales/README.md) and the scenario source for exact business request shapes, validation errors and ownership rules.
 
-```json
-{ "requester_id": "1234", "channel_name": "ai-conversation-..." }
-```
+## Events And Media
 
-Success (`AgentResponse`):
-
-```json
-{ "agent_id": "...", "create_ts": 1710000000, "state": "RUNNING" }
-```
-
-Validation failures return `400`; server failures return `500`.
-
-### `POST /api/stop-conversation`
-
-Body (`StopConversationRequest`): `{ "agent_id": "..." }`.
-
-Responses:
-
-- `{ "success": true }`
-- `{ "success": true, "state": "already-stopping" }` for idempotent stop state
-- `{ "error": string }` on failure
-
-### `POST /api/chat/completions`
-
-Optional SSE proxy path (not default runtime path). Requires `NEXT_LLM_API_KEY` and `NEXT_LLM_URL` when used.
-
-## Event/Data Interfaces
-
-- RTM transcript/state/metrics/errors consumed through `AgoraVoiceAI` event emitter.
-- Raw RTM `message` event parsed as fallback for `message.error` and `message.sal_status` payloads.
-- `AGENT_METRICS` payloads displayed by `QuickstartPipelineMetrics`.
+RTC carries microphone and synthesized audio. RTM/toolkit provides TRANSCRIPT_UPDATED, AGENT_STATE_CHANGED, AGENT_METRICS, completed-turn, error and SAL events where reported. Normalize toolkit local uid zero before display and retain interrupted turns. Preserve missing metric fields and data provenance; Inspector outcomes are manually confirmed.
 
 ## Environment Contract
 
-Required:
+Local Next.js reads `.env.local` from tracked `env.local.example`. Hosted/Docker servers inject runtime values; the public App ID must also be supplied to the browser build.
 
-- `NEXT_PUBLIC_AGORA_APP_ID`
-- `NEXT_AGORA_APP_CERTIFICATE`
+| Variable | Required | Owner / exposure | Purpose |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_AGORA_APP_ID` | Required | Next.js build and runtime; public | App ID from the selected Agora project; Docker must receive the same value at build and runtime. |
+| `NEXT_AGORA_APP_CERTIFICATE` | Required | Next.js server runtime; secret | Signs RTC/RTM credentials and authenticates managed Agent operations; never a build argument. |
+| `TOP_TEN_SCENARIO_TOOL_BASE_URL` | Optional | Next.js server; non-secret | This same app's public HTTPS origin. Omit for default conversation; enabling tools requires actual cloud reachability. |
+| `TOP_TEN_DATA_DIR` | Optional | Next.js server; local path | Optional persistent directory for follow-up result and request files. |
 
-This is the complete base `.env.local` contract. The optional BYOK route and provider snippets use additional variables only when a developer explicitly enables them.
+## External Services
 
-## Test Coverage for Interfaces
-
-- `scripts/verify-api-contracts.ts` asserts token generation, input validation, env failures, and SSE framing cases.
-
-## Shared Client-Side Interfaces
-
-From `types/conversation.ts` (high-use):
-
-- `AgoraTokenData`: token bootstrap payload consumed by `LandingPage`.
-- `AgoraRenewalTokens`: renewal callback result (`rtcToken`, `rtmToken`).
-- `ConversationComponentProps`: runtime dependencies for in-call component.
-
-## Interface Invariants
-
-- Token payload must always include `token`, `uid`, `channel`.
-- Invite route requires both `requester_id` and `channel_name`.
-- Stop route requires `agent_id`; missing should never be tolerated silently.
-- Token route should always return UID as string for downstream compatibility.
-
-## Event Interface Notes
-
-- Metrics stream entries are append-only in component state, capped to recent window.
-- Connection issue records carry `source`, `agentUserId`, code/message, timestamp.
-- SAL and signaling fallback payloads are parsed defensively because message schema can vary.
-
-## Backward Compatibility Guidance
-
-- If route response shape changes, update both client consumers and contract tests in same change.
-- If adding fields, keep existing fields stable to avoid quickstart consumer breakage.
-- Reflect interface changes in README and L1 docs to keep sample copyable.
+The server uses agora-agents with the configured managed STT/LLM/TTS providers. The browser uses RTC, Signaling and the Agent Client Toolkit. Optional business tools call this same app over public HTTPS, and their returned success is required before reporting an action complete. Provider BYOK blocks are opt-in, server-only and require separate verification.
 
 ## Related Deep Dives
 
-- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — How route contracts are used in sequence.
-- [transcript_pipeline.md](L2/transcript_pipeline.md) — Event-level contract mapping.
-
-## Scenario 07 follow-up results
-
-Scenario 07 invite additionally requires session_id. POST sessions accepts lead_id; GET/POST sessions/:id reads/ends that result. GET results supports lead_id. POST results and requests require the session_id query parameter fixed into server-generated tool URLs. See scenarios/07-basketball-trial-sales/README.md for payloads. Trial submission returns a received request and linked result, never booking confirmation.
-
-
-## Local conversation and optional tools
-
-Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
-
-TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.
-
-## U.S. example data
-
-The fictional academy is in Austin, Texas. Course records include location and `America/Chicago`; October trial times use CDT (`-05:00`). Prompts, course tool results and saved-result/history labels use the same course time zone.
+- [Tokens](L2/token_model.md)
+- [Transcript pipeline](L2/transcript_pipeline.md)
+- [Agent configuration](L2/invite_agent_config.md)
