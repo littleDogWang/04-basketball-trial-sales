@@ -2,7 +2,7 @@
 
 Follow up with an existing parent inquiry, qualify interest, and submit a trial request only with agreement. Every session has a durable result, including declines, callback needs, and incomplete conversations. This Web/RTC experience uses Alex Morgan, a fictional parent, and fixed basketball courses.
 
-See [design](design.md) and [acceptance](acceptance.md). Course configuration lives in `courses.json`; sample lead context lives in `leads.ts`. `results.ts` writes one atomic JSON file per session under `.scenario-data/07-basketball-trial-sales`, or `TOP_TEN_DATA_DIR/07-basketball-trial-sales`. A received trial request and its follow-up result are written together. `request_received` does not reserve a seat or confirm a booking.
+See [architecture](../../ARCHITECTURE.md) and [acceptance](acceptance.md). Course configuration lives in `courses.json`; sample lead context lives in `leads.ts`. `results.ts` writes one atomic JSON file per session under `.scenario-data/07-basketball-trial-sales`, or `TOP_TEN_DATA_DIR/07-basketball-trial-sales`. A received trial request and its follow-up result are written together. `request_received` does not reserve a seat or confirm a booking.
 
 The home page shows the original inquiry, selected result, and advisor-readable history. Refresh/restart preserves results when the data directory persists. Cloud agent tools require `TOP_TEN_SCENARIO_TOOL_BASE_URL` to point at this app on a cloud-reachable URL; localhost is insufficient for cloud callbacks. Voice start remains available without a callback URL; spoken answers and requests cannot be saved in that mode.
 
