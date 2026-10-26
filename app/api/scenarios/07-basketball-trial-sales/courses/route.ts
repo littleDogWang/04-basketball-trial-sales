@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { findCourse } from '@/scenarios/07-basketball-trial-sales/courses';
+import { findCourse } from '@/lib/basketball-trial-sales/courses';
 
 export async function GET(request: Request) {
   const age = Number(new URL(request.url).searchParams.get('child_age'));

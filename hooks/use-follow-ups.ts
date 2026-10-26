@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import type { FollowUpResult } from '@/scenarios/07-basketball-trial-sales/result-types';
-import { parentLead } from '@/scenarios/07-basketball-trial-sales/leads';
+import type { FollowUpResult } from '@/lib/basketball-trial-sales/result-types';
+import { parentLead } from '@/lib/basketball-trial-sales/leads';
 export const followUpApi = '/api/scenarios/07-basketball-trial-sales';
 export function useFollowUps(live: boolean) {
   const [results, setResults] = useState<FollowUpResult[]>([]);

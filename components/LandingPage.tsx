@@ -5,9 +5,9 @@ import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FollowUpResultPanel } from './FollowUpResultPanel';
-import { parentLead } from '@/scenarios/07-basketball-trial-sales/leads';
-import { COURSE_TIME_ZONE } from '@/scenarios/07-basketball-trial-sales/courses';
-import { outcomeLabels } from '@/scenarios/07-basketball-trial-sales/result-types';
+import { parentLead } from '@/lib/basketball-trial-sales/leads';
+import { COURSE_TIME_ZONE } from '@/lib/basketball-trial-sales/courses';
+import { outcomeLabels } from '@/lib/basketball-trial-sales/result-types';
 import { followUpApi, useFollowUps } from '@/hooks/use-follow-ups';
 import type { RTMClient } from 'agora-rtm';
 import type {

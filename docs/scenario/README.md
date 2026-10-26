@@ -34,3 +34,13 @@ TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public
 ## U.S. example data
 
 The fictional academy is in Austin, Texas. Course records include location and `America/Chicago`; October trial times use CDT (`-05:00`). Prompts, course tool results and saved-result/history labels use the same course time zone.
+
+## Source locations
+
+This guide lives in documentation; executable code uses the standalone Next.js
+Quickstart layout. Agent instructions and prompt assembly are in
+[lib/agent-config.ts](../../lib/agent-config.ts), optional tool contracts are in
+[lib/agent-tools.ts](../../lib/agent-tools.ts), and presentation content is in
+[lib/presentation.ts](../../lib/presentation.ts). Business modules and fixtures
+live in [lib/basketball-trial-sales/](../../lib/basketball-trial-sales/). File basenames in this guide
+refer to these source locations, not to files next to this document.

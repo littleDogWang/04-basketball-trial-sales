@@ -4,7 +4,7 @@
 
 Riley follows up with an existing fictional parent inquiry at Northside Basketball Academy in Austin, Texas. The conversation reuses known context, checks interest, discusses the child's goals and eligible courses, and can submit a trial request with explicit agreement when tools are enabled.
 
-One Next.js process owns the browser application and its HTTP routes. Agora cloud owns the managed STT → LLM → TTS pipeline; the browser is not a local speech/model runtime. The default provider configuration is recorded in the invite route and `scenarios/runtime-profile.ts`.
+One Next.js process owns the browser application and its HTTP routes. Agora cloud owns the managed STT → LLM → TTS pipeline; the browser is not a local speech/model runtime. The default provider configuration is recorded in the invite route and `lib/runtime-profile.ts`.
 
 ## Component Topology
 
@@ -32,8 +32,8 @@ Scenario routes -> single-process local file store
 - `components/ConversationComponent.tsx`: RTC/microphone hooks, toolkit events and transcript snapshots.
 - `app/api/generate-agora-token/route.ts`: RTM-capable token creation.
 - `app/api/invite-agent/route.ts`: privileged Agent configuration and startup.
-- `scenarios/07-basketball-trial-sales/`: source of truth for scenario-specific rules and data.
-- `scenarios/tool-contracts.ts`: available tools, parameter schemas and server-bound call scope.
+- `lib/basketball-trial-sales/`: source of truth for scenario-specific rules and data.
+- `lib/agent-tools.ts`: available tools, parameter schemas and server-bound call scope.
 - `lib/conversation.ts`: transcript UID/text normalization.
 
 ## Authentication And Secrets
@@ -59,4 +59,4 @@ The invite additionally requires the server-created follow-up `session_id`. The 
 
 The token route returns `{ token, uid, channel }`; stop accepts `{ agent_id }` and handles an already-stopping session idempotently. The prompt includes course data and parent inquiry context. A local incomplete session/history record is created, but spoken answers, trial requests and advisor notifications are not saved by the Agent. Session-bound course lookup, follow-up saving and trial-request submission update the local result store. A received request remains pending advisor confirmation.
 
-See [Interfaces](docs/ai/L1/06_interfaces.md), [internal recipe](docs/ai/RECIPE.md) and [scenario guide](scenarios/07-basketball-trial-sales/README.md) for contracts. Static checks, native startup, Docker startup and complete live speech/tool outcomes are separate evidence.
+See [Interfaces](docs/ai/L1/06_interfaces.md), [internal recipe](docs/ai/RECIPE.md) and [scenario guide](docs/scenario/README.md) for contracts. Static checks, native startup, Docker startup and complete live speech/tool outcomes are separate evidence.

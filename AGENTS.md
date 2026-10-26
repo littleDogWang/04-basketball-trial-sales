@@ -63,7 +63,8 @@ Use Node.js 22+ and pnpm 9.15.9. The tracked example is `env.local.example`; loc
 
 - UI and RTC/RTM client lifecycle live in `components`.
 - Browser-facing API routes live in `app/api`.
-- Shared constants and transcript normalization live in `lib`.
+- Constants, Agent config/tools, presentation and business modules live in `lib`; this repo owns its complete implementation.
+- Types live in `types`; business documentation lives in `docs/scenario`. Do not reintroduce a root multi-scenario registry.
 - If a workflow, request contract, or ownership boundary changes, update `README.md`, `AGENTS.md`, and the relevant `docs/ai/` files in the same change.
 
 ## Key Files
@@ -236,7 +237,7 @@ The generator and tester live in the [AgoraIO-Community/ai-devkit](https://githu
 
 ## Scenario 07 result workflow
 
-The authoritative local business design is `scenarios/07-basketball-trial-sales/design.md`. Preserve stable lead/session identity and explicit parent agreement. `results.ts` owns the local durable file store and atomically links trial requests to follow-up results. `request_received` is not booking confirmation.
+The authoritative local business design is `docs/scenario/design.md`. Preserve stable lead/session identity and explicit parent agreement. `results.ts` owns the local durable file store and atomically links trial requests to follow-up results. `request_received` is not booking confirmation.
 
 `LandingPage` creates the result before voice startup, passes its ID to invite-agent, polls results while live, and finalizes without changing the supported business conclusion. Agent tools are session-bound. Missing or local-only `TOP_TEN_SCENARIO_TOOL_BASE_URL` must permit local-data discussion without tool writes. Do not derive business conclusions from transcript keywords.
 
@@ -251,4 +252,4 @@ TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public
 
 ## Scenario 01 UI alignment (2026-10-21)
 
-`ScenarioShell` and `useScenarioUi` compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `scenarios/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. Business views remain scenario-owned below the voice workspace. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `scenarios/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
+`ScenarioShell` and `useScenarioUi` compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. Business views remain scenario-owned below the voice workspace. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.

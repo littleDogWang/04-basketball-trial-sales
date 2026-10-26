@@ -114,8 +114,10 @@ The invite additionally requires the server-created follow-up `session_id`. The 
 
 - `app/api/`: token, invite, stop and scenario HTTP routes.
 - `components/`: browser RTC/RTM lifecycle, transcript and scenario presentation.
-- `scenarios/07-basketball-trial-sales/`: scenario data, instructions and business rules.
-- `scenarios/index.ts`, `scenarios/tool-contracts.ts`: prompt and optional tool assembly.
+- `lib/basketball-trial-sales/`: repository-local business data and rules.
+- `lib/agent-config.ts`, `lib/agent-tools.ts`: prompt and optional tool assembly.
+- `types/`: application, Agent configuration and presentation types.
+- `docs/scenario/`: business guide, design and acceptance cases.
 - `scripts/`: doctor, contracts, scenario checks and delivery verification.
 - `docs/ai/`: AI loading card, internal recipe, all eight L1 summaries and L2 deep dives.
 
@@ -150,8 +152,8 @@ Replace `YOUR_AGORA_APP_ID` with the public App ID used in `.env.local`. Next.js
 - [RECIPE.md](RECIPE.md)
 - [AI repo card](docs/ai/L0_repo_card.md)
 - [Internal recipe contract](docs/ai/RECIPE.md)
-- [Scenario guide](scenarios/07-basketball-trial-sales/README.md)
-- [Acceptance cases](scenarios/07-basketball-trial-sales/acceptance.md)
+- [Scenario guide](docs/scenario/README.md)
+- [Acceptance cases](docs/scenario/acceptance.md)
 
 ## Security
 

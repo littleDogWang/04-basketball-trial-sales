@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { createFollowUp, getFollowUp, saveFollowUp, requestTrial, endFollowUp, listFollowUps } from '../scenarios/07-basketball-trial-sales/results';
+import { createFollowUp, getFollowUp, saveFollowUp, requestTrial, endFollowUp, listFollowUps } from '../lib/basketball-trial-sales/results';
 import { POST as saveResult, GET as listResults } from '../app/api/scenarios/07-basketball-trial-sales/results/route';
 import { POST as submitRequest } from '../app/api/scenarios/07-basketball-trial-sales/requests/route';
 import { POST as openSession } from '../app/api/scenarios/07-basketball-trial-sales/sessions/route';
-import { getScenarioTools } from '../scenarios/tool-contracts';
+import { getScenarioTools } from '../lib/agent-tools';
 let directory: string;
 const originalNow = Date.now;
 const originalDirectory = process.env.TOP_TEN_DATA_DIR;
@@ -21,7 +21,7 @@ function post(pathname: string, body: unknown) { return new Request(`http://loca
 test('an existing lead starts with honest incomplete progress and retains collected details after process restart', () => {
  const result = createFollowUp('PARENT-1042'); assert.equal(result.outcome, 'incomplete'); assert.equal(result.child_age, 9);
  saveFollowUp(result.session_id, details);
- const code = `const { getFollowUp } = require('./scenarios/07-basketball-trial-sales/results.ts'); console.log(JSON.stringify(getFollowUp('${result.session_id}')));`;
+ const code = `const { getFollowUp } = require('./lib/basketball-trial-sales/results.ts'); console.log(JSON.stringify(getFollowUp('${result.session_id}')));`;
  const child = spawnSync(process.execPath, ['--import', 'tsx', '-e', code], { cwd: process.cwd(), env: process.env, encoding: 'utf8' });
  assert.equal(child.status, 0, child.stderr); assert.equal(JSON.parse(child.stdout).goals, details.goals);
 });

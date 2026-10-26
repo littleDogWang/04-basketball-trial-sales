@@ -1,5 +1,5 @@
-import { readJson, resultResponse } from '@/scenarios/07-basketball-trial-sales/http';
-import { createFollowUp, parseBody, ResultError } from '@/scenarios/07-basketball-trial-sales/results';
+import { readJson, resultResponse } from '@/lib/basketball-trial-sales/http';
+import { createFollowUp, parseBody, ResultError } from '@/lib/basketball-trial-sales/results';
 export async function POST(request: Request) {
   return resultResponse(async () => {
     const body = parseBody(await readJson(request));

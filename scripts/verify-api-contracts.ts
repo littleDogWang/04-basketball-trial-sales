@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createFollowUp } from '../scenarios/07-basketball-trial-sales/results';
+import { createFollowUp } from '../lib/basketball-trial-sales/results';
 import { AgoraClient, Agent } from 'agora-agents';
 import { RtcTokenBuilder } from 'agora-token';
 import { NextRequest } from 'next/server';

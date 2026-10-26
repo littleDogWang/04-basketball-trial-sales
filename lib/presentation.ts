@@ -1,4 +1,5 @@
-import type { ScenarioPresentation } from '../presentation';
+import type { ScenarioPresentation } from '@/types/presentation';
+export type { ScenarioPresentation } from '@/types/presentation';
 
 export const presentation: ScenarioPresentation = {
   "id": "07-basketball-trial-sales",
@@ -53,15 +54,15 @@ export const presentation: ScenarioPresentation = {
     "extensionPoints": [
       {
         "title": "Change assistant instructions",
-        "path": "scenarios/07-basketball-trial-sales/config.ts"
+        "path": "lib/agent-config.ts"
       },
       {
         "title": "Adapt courses.ts",
-        "path": "scenarios/07-basketball-trial-sales/courses.ts"
+        "path": "lib/basketball-trial-sales/courses.ts"
       },
       {
         "title": "Adapt leads.ts",
-        "path": "scenarios/07-basketball-trial-sales/leads.ts"
+        "path": "lib/basketball-trial-sales/leads.ts"
       },
       {
         "title": "Choose models and voice",
@@ -69,8 +70,12 @@ export const presentation: ScenarioPresentation = {
       },
       {
         "title": "Adapt scenario UI content",
-        "path": "scenarios/07-basketball-trial-sales/presentation.ts"
+        "path": "lib/presentation.ts"
       }
     ]
   }
 };
+
+export function getScenarioPresentation(): ScenarioPresentation {
+  return presentation;
+}

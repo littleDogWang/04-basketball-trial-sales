@@ -1,7 +1,7 @@
 'use client';
-import { COURSE_TIME_ZONE } from '@/scenarios/07-basketball-trial-sales/courses';
+import { COURSE_TIME_ZONE } from '@/lib/basketball-trial-sales/courses';
 import { Badge } from '@/components/ui/badge';
-import { outcomeLabels, type FollowUpResult } from '@/scenarios/07-basketball-trial-sales/result-types';
+import { outcomeLabels, type FollowUpResult } from '@/lib/basketball-trial-sales/result-types';
 export function FollowUpResultPanel({ result }: { result?: FollowUpResult }) {
   if (!result) return <section className="follow-up-card result-empty"><span className="eyebrow">FOLLOW-UP RESULT</span><h2>A conversation with a clear next step.</h2><p>Discuss the family’s needs, their decision, and the next step. Connected tools can save the agreed outcome.</p><div className="result-preview"><span>01 · Understand the family</span><span>02 · Find a suitable trial</span><span>03 · Review the next step</span></div><p className="small-note">No follow-up selected. Start a call or open a saved result below.</p></section>;
   const missing = [!result.child_age && 'Child age', !result.experience && 'Experience', !result.goals && 'Learning goals', !result.preferred_times && 'Time preferences'].filter(Boolean);
