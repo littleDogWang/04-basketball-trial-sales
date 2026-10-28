@@ -17,7 +17,7 @@ export function getToolBaseUrl(value = process.env.TOP_TEN_SCENARIO_TOOL_BASE_UR
 export function getScenarioTools(_scenarioId: string, baseUrl = process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL, sessionId?: string): LlmTool[] {
   const origin = getToolBaseUrl(baseUrl);
   if (!origin || !sessionId) return [];
-  const root = `${origin}/api/scenarios/07-basketball-trial-sales`;
+  const root = `${origin}/api/scenarios/04-basketball-trial-sales`;
   const string = { type: 'string' };
   function post(name: string, description: string, path: string, properties: Record<string, unknown>): LlmTool {
     const keys = Object.keys(properties);

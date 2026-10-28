@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FollowUpResult } from '@/lib/basketball-trial-sales/result-types';
 import { parentLead } from '@/lib/basketball-trial-sales/leads';
-export const followUpApi = '/api/scenarios/07-basketball-trial-sales';
+export const followUpApi = '/api/scenarios/04-basketball-trial-sales';
 export function useFollowUps(live: boolean) {
   const [results, setResults] = useState<FollowUpResult[]>([]);
   const [activeSession, setSession] = useState<string | null>(null);

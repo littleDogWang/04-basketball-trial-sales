@@ -9,7 +9,7 @@ export class ResultError extends Error {
   constructor(message: string, public status = 400) { super(message); }
 }
 function directory() {
-  return path.join(process.env.TOP_TEN_DATA_DIR ?? path.join(process.cwd(), '.scenario-data'), '07-basketball-trial-sales');
+  return path.join(process.env.TOP_TEN_DATA_DIR ?? path.join(process.cwd(), '.scenario-data'), '04-basketball-trial-sales');
 }
 function filename(sessionId: string) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId)) throw new ResultError('Invalid session ID');

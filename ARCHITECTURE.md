@@ -45,8 +45,8 @@ The App Certificate stays in the Next.js server environment. Tokens are scoped/e
 Local development runs one Next.js process at http://localhost:3000 using `.env.local`. Native production uses `pnpm run build` then `pnpm run start`. Docker runs the same app as non-root UID 1001 on port 3000, without a reverse proxy inside the image. Use one long-lived Node process with persistent writable disk. `TOP_TEN_DATA_DIR` selects the result directory; otherwise .scenario-data is used. The sample routes are unauthenticated and intended for fictional families. Multi-instance or serverless use requires shared storage and application authorization.
 
 ```bash
-docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 07-basketball-trial-sales:local .
-docker run --rm -p 3000:3000 --env-file .env.local --mount source=07-basketball-trial-sales-data,target=/app/.scenario-data 07-basketball-trial-sales:local
+docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 04-basketball-trial-sales:local .
+docker run --rm -p 3000:3000 --env-file .env.local --mount source=04-basketball-trial-sales-data,target=/app/.scenario-data 04-basketball-trial-sales:local
 ```
 
 Replace `YOUR_AGORA_APP_ID` with the public App ID used in `.env.local`. Next.js embeds that identifier in the browser bundle, so changing projects requires rebuilding the image. The App Certificate is supplied only at container runtime. The named volume preserves the non-root-owned `.scenario-data` directory. Leave custom host storage variables unset inside Docker or map them to the mounted directory; a host absolute path is not automatically mounted.

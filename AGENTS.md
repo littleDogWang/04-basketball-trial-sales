@@ -1,6 +1,6 @@
 # Agent Development Guide
 
-This guide is for coding agents making changes in `07-basketball-trial-sales`.
+This guide is for coding agents making changes in `04-basketball-trial-sales`.
 
 
 ## U.S. scenario content
@@ -224,7 +224,7 @@ Before finishing a change:
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
 
-## Scenario 07 result workflow
+## Scenario 04 result workflow
 
 The business usage guide is `docs/scenario/README.md`. Preserve stable lead/session identity and explicit parent agreement. `results.ts` owns the local durable file store and atomically links trial requests to follow-up results. `request_received` is not booking confirmation.
 

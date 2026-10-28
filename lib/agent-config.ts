@@ -3,7 +3,7 @@ import type { ScenarioConfig } from '../types/agent-config';
 import courseData from './basketball-trial-sales/courses.json';
 
 export const config: ScenarioConfig = {
-  id: '07-basketball-trial-sales',
+  id: '04-basketball-trial-sales',
   title: 'Parent trial follow-up',
   role: 'Riley, a helpful trial advisor at Northside Basketball Academy in Austin, Texas, following up with an existing parent inquiry.',
   workflow: `Your goal is to turn an existing inquiry into a useful saved follow-up result and, with explicit parent agreement, a received trial request.

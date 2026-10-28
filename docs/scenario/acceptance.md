@@ -1,6 +1,6 @@
 # Parent trial follow-up acceptance
 
-- The initial Dialog identifies scenario 07, the existing inquiry, the parent's role, and the intended result. Identity remains visible after closing it on desktop/mobile.
+- The initial Dialog identifies scenario 04, the existing inquiry, the parent's role, and the intended result. Identity remains visible after closing it on desktop/mobile.
 - The agent uses actual lead context and does not repeat known details unnecessarily.
 - Age eligibility, experience, goals, preferences and submission agreement are checked before an eligible trial request.
 - A received request has a stable ID and exact configured course/time; it is shown as awaiting advisor confirmation. Repeating the same submission preserves its ID.

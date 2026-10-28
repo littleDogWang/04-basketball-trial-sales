@@ -5,9 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createFollowUp, getFollowUp, saveFollowUp, requestTrial, endFollowUp, listFollowUps } from '../lib/basketball-trial-sales/results';
-import { POST as saveResult, GET as listResults } from '../app/api/scenarios/07-basketball-trial-sales/results/route';
-import { POST as submitRequest } from '../app/api/scenarios/07-basketball-trial-sales/requests/route';
-import { POST as openSession } from '../app/api/scenarios/07-basketball-trial-sales/sessions/route';
+import { POST as saveResult, GET as listResults } from '../app/api/scenarios/04-basketball-trial-sales/results/route';
+import { POST as submitRequest } from '../app/api/scenarios/04-basketball-trial-sales/requests/route';
+import { POST as openSession } from '../app/api/scenarios/04-basketball-trial-sales/sessions/route';
 import { getScenarioTools } from '../lib/agent-tools';
 let directory: string;
 const originalNow = Date.now;
@@ -16,7 +16,7 @@ beforeEach(() => { Date.now = () => Date.parse('2026-10-16T00:00:00Z'); director
 afterEach(() => { Date.now = originalNow; if (originalDirectory === undefined) delete process.env.TOP_TEN_DATA_DIR; else process.env.TOP_TEN_DATA_DIR = originalDirectory; fs.rmSync(directory, { recursive: true, force: true }); });
 const details = { outcome: 'incomplete', experience: 'No prior lessons', goals: 'Build confidence', preferred_times: 'Saturday morning', summary: 'The parent is interested in a beginner trial.' };
 const trial = { course_id: 'BASKET-8-12-BEGINNER', preferred_time: '2026-10-24T10:00:00-05:00', consent: true, summary: 'Parent agreed to the Saturday beginner trial request.' };
-function post(pathname: string, body: unknown) { return new Request(`http://localhost/api/scenarios/07-basketball-trial-sales/${pathname}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+function post(pathname: string, body: unknown) { return new Request(`http://localhost/api/scenarios/04-basketball-trial-sales/${pathname}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
 
 test('an existing lead starts with honest incomplete progress and retains collected details after process restart', () => {
  const result = createFollowUp('PARENT-1042'); assert.equal(result.outcome, 'incomplete'); assert.equal(result.child_age, 9);
@@ -82,10 +82,10 @@ test('tool interpolation strings are normalized without treating false as consen
 });
 test('session-specific tool URLs bind writes to the selected server session', () => {
  const id = createFollowUp('PARENT-1042').session_id;
- const tools = getScenarioTools('07-basketball-trial-sales', 'https://tools.example.test', id);
+ const tools = getScenarioTools('04-basketball-trial-sales', 'https://tools.example.test', id);
  assert.equal(tools.length, 3);
  for (const tool of tools.filter(tool => tool.server?.method === 'POST')) assert.equal(new URL(tool.server!.url!).searchParams.get('session_id'), id);
- assert.deepEqual(getScenarioTools('07-basketball-trial-sales', '', id), []);
+ assert.deepEqual(getScenarioTools('04-basketball-trial-sales', '', id), []);
 });
 test('save failures are server failures and leave the last durable result unchanged', async () => {
  const id = createFollowUp('PARENT-1042').session_id; const before = getFollowUp(id);
@@ -93,11 +93,11 @@ test('save failures are server failures and leave the last durable result unchan
  const originalError = console.error; console.error = () => {};
  try { assert.equal((await saveResult(post(`results?session_id=${id}`, details))).status, 500); assert.deepEqual(getFollowUp(id), before); }
  finally { fs.renameSync = originalRename; console.error = originalError; }
- assert.equal(fs.readdirSync(path.join(directory, '07-basketball-trial-sales')).filter(file => file.endsWith('.tmp')).length, 0);
+ assert.equal(fs.readdirSync(path.join(directory, '04-basketball-trial-sales')).filter(file => file.endsWith('.tmp')).length, 0);
 });
 test('a corrupt stored record is reported as a server error and never silently overwritten', async () => {
  const id = createFollowUp('PARENT-1042').session_id;
- const file = path.join(directory, '07-basketball-trial-sales', `${id}.json`); fs.writeFileSync(file, '{corrupt');
+ const file = path.join(directory, '04-basketball-trial-sales', `${id}.json`); fs.writeFileSync(file, '{corrupt');
  const originalError = console.error; console.error = () => {};
  try { assert.equal((await listResults(new Request('http://localhost/results'))).status, 500); }
  finally { console.error = originalError; }
