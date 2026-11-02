@@ -1,12 +1,10 @@
-import { getToolBaseUrl } from '@/lib/agent-tools';
-import { readJson, resultResponse, sessionFrom } from '@/lib/basketball-trial-sales/http';
-import { listFollowUps, saveFollowUp } from '@/lib/basketball-trial-sales/results';
-export async function GET(request: Request) {
-  return resultResponse(() => ({
-    results: listFollowUps(new URL(request.url).searchParams.get('lead_id') ?? undefined),
-    tools_ready: Boolean(getToolBaseUrl()),
-  }));
+import { NextResponse } from 'next/server';
+
+// Business data is not available in the conversation-only first version.
+export async function GET(_request?: Request, _context?: unknown) {
+  return NextResponse.json({ error: 'business_data_not_available', message: 'This first version provides voice conversation only.' }, { status: 410 });
 }
-export async function POST(request: Request) {
-  return resultResponse(async () => ({ result: saveFollowUp(sessionFrom(request), await readJson(request)) }));
+
+export async function POST(_request?: Request, _context?: unknown) {
+  return NextResponse.json({ error: 'business_data_not_available', message: 'This first version provides voice conversation only.' }, { status: 410 });
 }

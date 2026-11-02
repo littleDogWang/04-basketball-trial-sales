@@ -1,46 +1,24 @@
-# 07 Parent trial follow-up
+# Parent Trial Follow-up
 
-Follow up with an existing parent inquiry, qualify interest, and submit a trial request only with agreement. Every session has a durable result, including declines, callback needs, and incomplete conversations. This Web/RTC experience uses Alex Morgan, a fictional parent, and fixed basketball courses.
+Discuss a child's basketball interests and whether a beginner trial may be suitable.
 
-See [architecture](../../ARCHITECTURE.md) and [acceptance](acceptance.md). Course configuration lives in `courses.json`; sample lead context lives in `leads.ts`. `results.ts` writes one atomic JSON file per session under `.scenario-data/04-basketball-trial-sales`, or `TOP_TEN_DATA_DIR/04-basketball-trial-sales`. A received trial request and its follow-up result are written together. `request_received` does not reserve a seat or confirm a booking.
+## Conversation flow
 
-The home page shows the original inquiry, selected result, and advisor-readable history. Refresh/restart preserves results when the data directory persists. Cloud agent tools require `TOP_TEN_SCENARIO_TOOL_BASE_URL` to point at this app on a cloud-reachable URL; localhost is insufficient for cloud callbacks. Voice start remains available without a callback URL; spoken answers and requests cannot be saved in that mode.
+Ask whether now is a good time to discuss a beginner basketball trial. Ask about the child's age, experience, interests and preferred times one question at a time, skipping details already supplied. Use only the bundled public course description and age range when discussing suitability. Respect hesitation, refusal and requests to stop. Answer questions without pressure. Discuss a possible next step and give a verbal recap of the parent's stated needs; explain that actual times, spaces and enrollment must be confirmed with the course provider.
 
-## Routes
+## Boundaries
 
-- `POST /api/scenarios/04-basketball-trial-sales/sessions`: `{ lead_id: "PARENT-1042" }` creates an incomplete result.
-- `GET /api/scenarios/04-basketball-trial-sales/sessions/:sessionId`: retrieve one saved result.
-- `POST /api/scenarios/04-basketball-trial-sales/sessions/:sessionId`: idempotently end without overwriting the saved outcome.
-- `GET /api/scenarios/04-basketball-trial-sales/results?lead_id=PARENT-1042`: list results and local tool configuration availability.
-- `POST /api/scenarios/04-basketball-trial-sales/results?session_id=:id`: save known context or a supported non-request outcome.
-- `GET /api/scenarios/04-basketball-trial-sales/courses?child_age=9`: configured eligible courses and times.
-- `POST /api/scenarios/04-basketball-trial-sales/requests?session_id=:id`: `{ course_id, preferred_time, contact?, consent: true, summary }`; requires previously saved experience, goals and time preferences. Repeating the same received request returns its original ID. A different request conflicts.
+No parent lead, customer history, course inventory or registration system is connected. Do not assume the parent's name or contact details. Do not request phone numbers or addresses for follow-up. Do not save a follow-up, reserve a place, submit a trial request, schedule a callback, notify an advisor or claim enrollment or payment.
 
-Result writes accept `outcome`, `child_age`, `experience`, `goals`, `preferred_times`, `contact`, `reason`, `summary`, `next_action`, `callback_at`, and `follow_up_consent`. Tool-interpolated numeric/boolean strings are normalized strictly. Blank strings and age zero preserve known details. Follow-up requires agreement, reason and a next action. Terminal outcomes cannot be replaced with another conclusion.
+This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
 
-## Local boundary
+## Trying the conversation
 
-The file store supports one local Node.js process on persistent disk. Multiple server processes and ephemeral serverless filesystems need a shared durable store before real deployment. Routes are unauthenticated sample routes: use fictional data, not real family records, until application authentication and access control are provided. No CRM notification, phone call, SMS, payment, booking confirmation, or human transfer is executed.
+- My child is nine and has never played basketball.
+- We are only exploring options and are not ready to enroll.
 
-Local HTTP tests and UI screenshots prove the local workflow only. Real voice/tool invocation requires separate live acceptance with a reachable callback URL.
+Ask for a verbal recap before ending. Only the current page retains transcript and diagnostic state; no result, order, appointment, registration or feedback record is saved.
 
+## Implementation
 
-## Local conversation and optional tools
-
-Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
-
-TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.
-
-## U.S. example data
-
-The fictional academy is in Austin, Texas. Course records include location and `America/Chicago`; October trial times use CDT (`-05:00`). Prompts, course tool results and saved-result/history labels use the same course time zone.
-
-## Source locations
-
-This guide lives in documentation; executable code uses the standalone Next.js
-Quickstart layout. Agent instructions and prompt assembly are in
-[lib/agent-config.ts](../../lib/agent-config.ts), optional tool contracts are in
-[lib/agent-tools.ts](../../lib/agent-tools.ts), and presentation content is in
-[lib/presentation.ts](../../lib/presentation.ts). Business modules and fixtures
-live in [lib/basketball-trial-sales/](../../lib/basketball-trial-sales/). File basenames in this guide
-refer to these source locations, not to files next to this document.
+Behavior lives in lib/agent-config.ts. The page uses the shared voice lifecycle. lib/agent-tools.ts is empty and all business API routes return HTTP 410. See [acceptance cases](acceptance.md).

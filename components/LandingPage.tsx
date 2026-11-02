@@ -1,25 +1,10 @@
 'use client';
 
-import { type ReactNode } from 'react';
-import { EMPTY_INSPECTION, type InspectionSnapshot } from '@/lib/inspection';
-import type { AgentSignalSnapshot } from '@/lib/agent-signal';
-import { getScenarioPresentation } from '@/lib/presentation';
-import { ScenarioIdentity } from './ScenarioIdentity';
-import { ConversationWorkspace } from './ConversationWorkspace';
-import { QuickstartPreCallCard, ScenarioEntryDialog } from './QuickstartPreCallCard';
-import { ScenarioInspector } from './ScenarioInspector';
-import { DeveloperGuide } from './DeveloperGuide';
-import { ConversationPanel } from './agent-ui/conversation-panel';
-
 import { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FollowUpResultPanel } from './FollowUpResultPanel';
-import { parentLead } from '@/lib/basketball-trial-sales/leads';
-import { COURSE_TIME_ZONE } from '@/lib/basketball-trial-sales/courses';
-import { outcomeLabels } from '@/lib/basketball-trial-sales/result-types';
-import { followUpApi, useFollowUps } from '@/hooks/use-follow-ups';
+import { ScenarioIdentity } from './ScenarioIdentity';
+import { Alert, AlertDescription } from './ui/alert';
+import { Button } from './ui/button';
 import type { RTMClient } from 'agora-rtm';
 import type {
   AgoraTokenData,
@@ -27,8 +12,19 @@ import type {
   AgentResponse,
   AgoraRenewalTokens,
 } from '../types/conversation';
+import { getScenarioPresentation } from '@/lib/presentation';
+import type { AgentSignalSnapshot } from '@/lib/agent-signal';
+import { EMPTY_INSPECTION, type InspectionSnapshot } from '@/lib/inspection';
+import { DeveloperGuide } from './DeveloperGuide';
+import { ScenarioInspector } from './ScenarioInspector';
+import { ConversationPanel } from './agent-ui/conversation-panel';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LoadingSkeleton } from './LoadingSkeleton';
+import {
+  QuickstartPreCallCard,
+  ScenarioEntryDialog,
+} from './QuickstartPreCallCard';
+import { ConversationWorkspace } from './ConversationWorkspace';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -71,17 +67,23 @@ const AgoraProvider = dynamic(
 );
 
 export default function LandingPage() {
+  const scenario = getScenarioPresentation();
   const [showConversation, setShowConversation] = useState(false);
-  const ui = useScenarioUi();
-  const [ending, setEnding] = useState(false);
-  const endPending = useRef(false);
-  const followUps = useFollowUps(showConversation);
-  const pendingSession = useRef<string | null>(null);
-  const [finalizeFailed, setFinalizeFailed] = useState(false);
+  const [activity, setActivity] = useState<AgentSignalSnapshot>({
+    state: 'idle',
+    micEnabled: false,
+  });
+  const [inspection, setInspection] =
+    useState<InspectionSnapshot>(EMPTY_INSPECTION);
+  const [entryOpen, setEntryOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [outcome, setOutcome] = useState('');
 
   // Preload heavy modules on mount so they're already cached when the user
-  // clicks "Try it Now" — eliminates the ~1.8s dynamic-import delay.
+  // clicks the start button — eliminates the ~1.8s dynamic-import delay.
   useEffect(() => {
+    import('./ConversationComponent').catch(() => {});
     import('agora-rtc-react').catch(() => {});
     import('agora-rtm').catch(() => {});
   }, []);
@@ -89,22 +91,26 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const [agoraData, setAgoraData] = useState<AgoraTokenData | null>(null);
   const [rtmClient, setRtmClient] = useState<RTMClient | null>(null);
+  const [agentJoinError, setAgentJoinError] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const stopInFlight = useRef(false);
 
   const handleStartConversation = async () => {
+    if (isLoading || showConversation) return;
     setIsLoading(true);
-    ui.start();
+    setActivity({ state: 'connecting', micEnabled: false });
+    setInspection({
+      ...EMPTY_INSPECTION,
+      lifecycle: 'starting',
+      startedAt: Date.now(),
+    });
+    setOutcome('');
+    setEnded(false);
     setError(null);
-
+    setAgentJoinError(false);
 
     try {
-      if (!pendingSession.current) {
-        const response = await fetch(`${followUpApi}/sessions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: parentLead.lead_id }) });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error);
-        pendingSession.current = body.result.session_id;
-        followUps.select(body.result.session_id);
-        await followUps.reload();
-      }
       // 1. Fetch RTC token + channel
       // console.log('Fetching Agora token...');
       const agoraResponse = await fetch('/api/generate-agora-token');
@@ -120,7 +126,7 @@ export default function LandingPage() {
       // 2. Run agent invite and RTM setup in parallel — both only need the token response.
       //    RTM must be ready before ConversationComponent mounts so AgoraVoiceAI
       //    can subscribe immediately. Agent invite is non-fatal.
-      const setup = await Promise.allSettled([
+      const [agentData, rtm] = await Promise.all([
         // 2a. Start the AI agent
         fetch('/api/invite-agent', {
           method: 'POST',
@@ -128,13 +134,19 @@ export default function LandingPage() {
           body: JSON.stringify({
             requester_id: responseData.uid,
             channel_name: responseData.channel,
-            session_id: pendingSession.current!,
           } as ClientStartRequest),
         })
           .then(async (res) => {
-            const body = await res.json();
-            if (!res.ok) throw new Error(body.error || 'Could not connect to the follow-up advisor.');
-            return body as AgentResponse;
+            if (!res.ok) {
+              setAgentJoinError(true);
+              return null;
+            }
+            return res.json() as Promise<AgentResponse>;
+          })
+          .catch((err) => {
+            console.error('Failed to start conversation with agent:', err);
+            setAgentJoinError(true);
+            return null;
           }),
 
         // 2b. Set up RTM (dynamically imported to keep it client-only)
@@ -151,19 +163,34 @@ export default function LandingPage() {
         })(),
       ]);
 
-      if (setup[0].status === 'rejected' || setup[1].status === 'rejected') {
-        if (setup[1].status === 'fulfilled') await setup[1].value.logout().catch(() => {});
-        if (setup[0].status === 'fulfilled') await fetch('/api/stop-conversation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent_id: setup[0].value.agent_id }) });
-        throw setup[0].status === 'rejected' ? setup[0].reason : setup[1].status === 'rejected' ? setup[1].reason : new Error('Connection failed');
-      }
-      const agentData = setup[0].value;
-      const rtm = setup[1].value;
       // 3. All dependencies ready — store state and show conversation
       setRtmClient(rtm);
-      setAgoraData({ ...responseData, agentId: agentData?.agent_id, startedAt: Date.now() });
+      setAgoraData({
+        ...responseData,
+        agentId: agentData?.agent_id,
+        startedAt: Date.now(),
+      });
       setShowConversation(true);
+      setEntryOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start parent follow-up. Please retry.');
+      setActivity({ state: 'error', micEnabled: false });
+      setInspection((previous) => ({
+        ...previous,
+        lifecycle: 'error',
+        agentState: 'error',
+        events: [
+          {
+            id: 'startup-error',
+            time: Date.now(),
+            kind: 'error',
+            label: 'Could not start voice conversation',
+            detail: 'Check the server configuration and try again.',
+          },
+        ],
+      }));
+      setError(
+        'Could not connect to ' + scenario.name + '. Please try again.',
+      );
       console.error('Error starting conversation:', err);
     } finally {
       setIsLoading(false);
@@ -184,7 +211,9 @@ export default function LandingPage() {
         // Both are fetched in parallel to stay within the token-expiry grace-period window.
         const [rtcResponse, rtmResponse] = await Promise.all([
           fetch(`/api/generate-agora-token?channel=${channel}&uid=${uid}`),
-          fetch(`/api/generate-agora-token?channel=${channel}&uid=${agoraData.uid}`),
+          fetch(
+            `/api/generate-agora-token?channel=${channel}&uid=${agoraData.uid}`,
+          ),
         ]);
         const [rtcData, rtmData] = await Promise.all([
           rtcResponse.json(),
@@ -207,136 +236,189 @@ export default function LandingPage() {
     [agoraData],
   );
 
-  const finalizeResult = async () => {
-    const id = pendingSession.current || followUps.activeSession;
-    if (!id) return;
-    try {
-      const response = await fetch(`${followUpApi}/sessions/${id}`, { method: 'POST' });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      setFinalizeFailed(false);
-      pendingSession.current = null;
-      await followUps.reload();
-    } catch (error) {
-      setFinalizeFailed(true);
-      setError(error instanceof Error ? error.message : 'Could not finalize this follow-up. Retry saving.');
-    }
-  };
-
   const handleEndConversation = async () => {
-    if (endPending.current) return;
-    endPending.current = true;
+    if (stopInFlight.current) return;
+    stopInFlight.current = true;
     setEnding(true);
+    setError(null);
     try {
-      // Stop the AI agent
       if (agoraData?.agentId) {
-        try {
-          // console.log('Stopping agent:', agoraData.agentId);
-          const response = await fetch('/api/stop-conversation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ agent_id: agoraData.agentId }),
-          });
-          if (!response.ok) {
-            console.error('Failed to stop agent:', await response.text());
-          }
-          // else console.log('Agent stopped successfully');
-        } catch (error) {
-          console.error('Error stopping agent:', error);
-        }
+        const response = await fetch('/api/stop-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent_id: agoraData.agentId }),
+        });
+        const result = await response.json();
+        if (!response.ok || result.success !== true)
+          throw new Error('Agent stop failed');
       }
-
-      // Tear down RTM — owned here since we created it here
-      rtmClient?.logout().catch((err) => console.error('RTM logout error:', err));
+      await rtmClient
+        ?.logout()
+        .catch((err) => console.error('RTM logout error:', err));
       setRtmClient(null);
+      setAgoraData(null);
       setShowConversation(false);
-      ui.end();
-      await finalizeResult();
+      setActivity({ state: 'ended', micEnabled: false });
+      setInspection((previous) => ({
+        ...previous,
+        lifecycle: 'ended',
+        agentState: 'ended',
+        micEnabled: false,
+        transport: 'DISCONNECTED',
+        endedAt: Date.now(),
+        events: [
+          ...previous.events,
+          {
+            id: `session-ended-${Date.now()}`,
+            time: Date.now(),
+            kind: 'transport' as const,
+            label: 'Session ended',
+          },
+        ].slice(-100),
+      }));
+      setEnded(true);
+    } catch (err) {
+      console.error('Error ending voice session:', err);
+      setError(
+        'Could not end the conversation. Your session is still open. Try ending it again.',
+      );
     } finally {
-      endPending.current = false;
+      stopInFlight.current = false;
       setEnding(false);
     }
   };
 
-  const selectedResult = followUps.results.find(result => result.session_id === followUps.activeSession);
-
-  return (
-    <ScenarioShell ui={ui} active={showConversation} loading={isLoading} error={error} disabled={!followUps.loaded || !!followUps.loadError || finalizeFailed} onStart={handleStartConversation}
-      business={<>{(error || followUps.loadError) && <div role="alert" className="workspace-error"><p>{error || followUps.loadError}</p><Button variant="outline" onClick={() => { if (finalizeFailed) { setError(null); void finalizeResult(); } else { void followUps.reload(); } }}>{finalizeFailed ? 'Retry saving this follow-up' : 'Reload saved results'}</Button></div>}
-      <div className="trial-grid"><aside className="follow-up-card lead-card"><span className="eyebrow">EXISTING PARENT INQUIRY</span><div className="parent-avatar">AM</div><h2>{parentLead.parent_name}</h2><p>{parentLead.contact}</p><Badge variant="secondary">{parentLead.lead_id}</Badge><dl className="result-fields"><div><dt>Source</dt><dd>{parentLead.source}</dd></div><div><dt>Interested in</dt><dd>{parentLead.interest}</dd></div><div><dt>Child’s age</dt><dd>{parentLead.child_age} years</dd></div></dl><div className="next-action"><span className="eyebrow">THE GOAL</span><p>Check interest, find a suitable trial, and discuss what happens next.</p></div><p className="small-note">Fictional inquiry for this experience. Previously supplied details do not need to be asked again.</p></aside><FollowUpResultPanel result={selectedResult} /></div>
-      <section className="history-section"><div className="result-heading"><div><span className="eyebrow">COURSE ADVISOR VIEW</span><h2>Saved follow-ups</h2></div><Button size="sm" variant="outline" onClick={() => { void followUps.reload(); }}>Refresh results</Button></div><p className="small-note">Open a record to review the family’s needs and next step. Records remain available after reloading.</p>{!followUps.loaded ? <p role="status">Loading saved follow-ups…</p> : followUps.results.length === 0 ? <div className="history-empty">No saved follow-ups yet.</div> : <div className="history-list">{followUps.results.map(result => <button key={result.session_id} type="button" disabled={showConversation} aria-pressed={followUps.activeSession === result.session_id} className="history-item" onClick={() => followUps.select(result.session_id)}><div><strong>{outcomeLabels[result.outcome]}</strong><p>{result.summary}</p></div><span>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: COURSE_TIME_ZONE, timeZoneName: 'short', hour12: true }).format(new Date(result.created_at))}</span></button>)}</div>}</section>
-</>}>
-
-      {error && <p className="demo-workspace-fallback" role="alert">{error}</p>}
-      {showConversation && agoraData && rtmClient && <Suspense fallback={<LoadingSkeleton />}><ErrorBoundary><AgoraProvider>
-        <ConversationComponent agoraData={agoraData} rtmClient={rtmClient} onTokenWillExpire={handleTokenWillExpire} onEndConversation={handleEndConversation}
-          onActivityChange={ui.setActivity} onInspectionChange={ui.setInspection} ending={ending}
-           />
-      </AgoraProvider></ErrorBoundary></Suspense>}
-    </ScenarioShell>
-  );
-}
-
-
-function useScenarioUi() {
-  const [activity, setActivity] = useState<AgentSignalSnapshot>({ state: 'idle', micEnabled: false });
-  const [inspection, setInspection] = useState<InspectionSnapshot>(EMPTY_INSPECTION);
-  const [entryOpen, setEntryOpen] = useState(true);
-  const [outcome, setOutcome] = useState('');
-  const start = useCallback(() => {
-    setActivity({ state: 'connecting', micEnabled: false });
-    setInspection({ ...EMPTY_INSPECTION, lifecycle: 'starting', startedAt: Date.now() });
-    setOutcome('');
-    setEntryOpen(false);
-  }, []);
-  const end = useCallback(() => {
-    setActivity({ state: 'ended', micEnabled: false });
-    setInspection(previous => ({ ...previous, lifecycle: 'ended', endedAt: Date.now(), agentState: 'ended', micEnabled: false, transport: 'DISCONNECTED' }));
-  }, []);
-  return { activity, setActivity, inspection, setInspection, entryOpen, setEntryOpen, outcome, setOutcome, start, end };
-}
-
-type ScenarioUi = ReturnType<typeof useScenarioUi>;
-
-function ScenarioShell({ ui, active, loading, error, disabled = false, onStart, children, business }: {
-  ui: ScenarioUi;
-  active: boolean;
-  loading: boolean;
-  error: string | null;
-  disabled?: boolean;
-  onStart: () => void;
-  children: ReactNode;
-  business?: ReactNode;
-}) {
-  const scenario = getScenarioPresentation();
-  const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [buildOpen, setBuildOpen] = useState(false);
-  const activity: AgentSignalSnapshot = !active && error
-    ? { state: 'error', micEnabled: false }
-    : loading ? { state: 'connecting', micEnabled: false } : ui.activity;
-  const inspection: InspectionSnapshot = !active && error
-    ? { ...ui.inspection, lifecycle: 'error', agentState: 'error', events: [...ui.inspection.events, { id: 'session-error', time: ui.inspection.startedAt ?? 0, kind: 'error', label: 'Session needs attention', detail: error }] }
-    : ui.inspection;
   return (
     <div className="demo-shell">
-      <ScenarioIdentity scenario={scenario} onInspect={() => setInspectorOpen(true)} onBuild={() => setBuildOpen(true)} />
-      <ConversationWorkspace scenario={scenario} activity={activity} inspection={inspection}>
-        {active ? children : inspection.lifecycle === 'ended' ? (
+      <ScenarioIdentity
+        scenario={scenario}
+        onInspect={() => setInspectorOpen(true)}
+        onBuild={() => setBuildOpen(true)}
+      />
+      <ConversationWorkspace
+        scenario={scenario}
+        activity={
+          agentJoinError
+            ? { state: 'error', micEnabled: activity.micEnabled }
+            : activity
+        }
+        inspection={inspection}
+      >
+        {ended ? (
           <section className="demo-session demo-session-ended">
-            <div className="demo-session-heading"><h2>Session ended.</h2></div>
-            <ConversationPanel id="last-session-transcript" name={scenario.name} messages={inspection.messages} pending={false} voiceState="ended" className="demo-conversation" />
+            <div className="demo-session-heading">
+              <div>
+                <h2>Session ended.</h2>
+              </div>
+            </div>
+            <ConversationPanel
+              id="last-session-transcript"
+              name={scenario.name}
+              messages={inspection.messages}
+              pending={false}
+              voiceState="ended"
+              className="demo-conversation"
+            />
             <div className="demo-ended-actions">
-              <Button disabled={disabled || loading} onClick={onStart}>Start again</Button>
+              <Button onClick={handleStartConversation}>Start again</Button>
             </div>
           </section>
+        ) : !showConversation ? (
+          <QuickstartPreCallCard
+            scenario={scenario}
+            isLoading={isLoading}
+            error={error}
+            onStart={handleStartConversation}
+          />
+        ) : agoraData && rtmClient ? (
+          <Suspense fallback={<LoadingSkeleton />}>
+            <ErrorBoundary
+              fallback={
+                <div className="demo-workspace-fallback" role="alert">
+                  <p>Could not load the voice session.</p>
+                  <Button
+                    variant="outline"
+                    disabled={ending}
+                    onClick={handleEndConversation}
+                  >
+                    End conversation
+                  </Button>
+                </div>
+              }
+            >
+              <AgoraProvider>
+                <ConversationComponent
+                  agoraData={agoraData}
+                  rtmClient={rtmClient}
+                  onTokenWillExpire={handleTokenWillExpire}
+                  onEndConversation={handleEndConversation}
+                  onActivityChange={setActivity}
+                  onInspectionChange={setInspection}
+                  ending={ending}
+                  startupError={
+                    agentJoinError
+                      ? `Could not start ${scenario.name}. End this session and try again.`
+                      : undefined
+                  }
+                  feedback={
+                    <>
+                      {agentJoinError && (
+                        <Alert variant="destructive">
+                          <AlertDescription>
+                            The assistant could not connect. End this session and try again.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      {error && (
+                        <Alert variant="destructive">
+                          <AlertDescription>
+                            {error}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
+                              disabled={ending}
+                              onClick={handleEndConversation}
+                            >
+                              Retry ending session
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </>
+                  }
+                />
+              </AgoraProvider>
+            </ErrorBoundary>
+          </Suspense>
         ) : (
-          <QuickstartPreCallCard scenario={scenario} isLoading={loading} disabled={disabled} error={error} onStart={onStart} />
+          <p className="demo-workspace-fallback" role="alert">
+            Could not load the voice session.
+          </p>
         )}
       </ConversationWorkspace>
-      {business ? <section className="demo-business" aria-label={`${scenario.name} details`}>{business}</section> : null}
-      <ScenarioEntryDialog scenario={scenario} open={ui.entryOpen && !active} onOpenChange={ui.setEntryOpen} isLoading={loading} disabled={disabled} error={error} sessionActive={active} onStart={onStart} />
-      <ScenarioInspector scenario={scenario} snapshot={inspection} outcome={ui.outcome} onOutcomeChange={ui.setOutcome} open={inspectorOpen} onOpenChange={setInspectorOpen} />
-      <DeveloperGuide scenario={scenario} open={buildOpen} onOpenChange={setBuildOpen} />
+      <ScenarioEntryDialog
+        scenario={scenario}
+        open={entryOpen}
+        onOpenChange={setEntryOpen}
+        isLoading={isLoading}
+        error={showConversation ? null : error}
+        sessionActive={showConversation}
+        onStart={handleStartConversation}
+      />
+      <ScenarioInspector
+        scenario={scenario}
+        snapshot={inspection}
+        outcome={outcome}
+        onOutcomeChange={setOutcome}
+        open={inspectorOpen}
+        onOpenChange={setInspectorOpen}
+      />
+      <DeveloperGuide
+        scenario={scenario}
+        open={buildOpen}
+        onOpenChange={setBuildOpen}
+      />
     </div>
   );
 }

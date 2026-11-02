@@ -1,14 +1,25 @@
-# Parent trial follow-up acceptance
+# Conversation-Only Acceptance
 
-- The initial Dialog identifies scenario 04, the existing inquiry, the parent's role, and the intended result. Identity remains visible after closing it on desktop/mobile.
-- The agent uses actual lead context and does not repeat known details unnecessarily.
-- Age eligibility, experience, goals, preferences and submission agreement are checked before an eligible trial request.
-- A received request has a stable ID and exact configured course/time; it is shown as awaiting advisor confirmation. Repeating the same submission preserves its ID.
-- No-request outcomes are saved: follow-up needed (with agreement), not interested, not eligible, do not contact, wrong contact, incomplete.
-- Child experience and goals remain in the saved result and are visible to the next advisor.
-- Reloading and a new Node.js process can retrieve the same result. Ending cannot downgrade a received request or manufacture missing answers.
-- Save failures remain failures; a corrupt store is not silently replaced. Request and result writes are atomic.
-- History can reopen earlier results for the original lead.
-- Missing cloud callback configuration prevents voice startup; local UI/API acceptance must be distinguished from live voice/tool invocation.
+## Local regression
 
-Run `pnpm run verify` (including `test:follow-up`). Screenshots and synthetic acceptance records stay local and are not business-conversion evidence.
+- Run pnpm run verify.
+- A mocked Agent starts with only requester_id and channel_name.
+- Setting the former business-tool origin must not enable tools or create data state.
+- Business API routes return HTTP 410 and old data workbenches are not rendered.
+
+## Browser checks
+
+- Desktop and mobile initial Dialog, Preview first and persistent identity identify this scenario.
+- The start control is enabled without a business record or shopping session.
+- The first application request on start is the token request, with no business API call.
+- A failed token/invite is reported honestly and allows a retry.
+
+## Real voice checks
+
+- Say: My child is nine and has never played basketball.
+- Say: We are only exploring options and are not ready to enroll.
+- Ask for a recap, interrupt, correct an earlier detail and request to stop.
+- The assistant never claims a lookup, saved result or external action.
+- Check actual two-way audio, both transcript roles, microphone controls and clean Agent stop.
+
+Mocked checks and browser screenshots do not establish real speech, model behavior or public deployment acceptance.

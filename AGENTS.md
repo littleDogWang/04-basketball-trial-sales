@@ -11,6 +11,14 @@ Use a United States setting for fictional business examples, UI copy, Agent cont
 
 Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
 
+
+## First-version scope
+
+Discuss a child's basketball interests and whether a beginner trial may be suitable.
+
+This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+
+
 ## How to Load
 
 This repository uses progressive disclosure documentation. Docs live under `docs/ai/` in three levels.
@@ -40,19 +48,19 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - UI components: vendored agent-ui source, scenario-01 theme, application-owned activity canvas; see THIRD_PARTY_NOTICES.md.
 - Server SDK: `agora-agents` for managed agent session startup
 - API routes: token generation, agent invite, chat, and stop routes live in `app/api`
-- Default agent config: Agora-managed STT, LLM and TTS. `.env.local` requires the two Agora project credentials; optional scenario variables are documented in README.
+- Default agent config: Agora-managed STT, LLM and TTS. `.env.local` requires the two Agora project credentials; no business callback or storage configuration is used.
 
 ## Supported Modes
 
-Local development runs one Next.js process at http://localhost:3000 using `.env.local`. Native production uses `pnpm run build` then `pnpm run start`. Docker runs the same app as non-root UID 1001 on port 3000, without a reverse proxy inside the image. Use one long-lived Node process with persistent writable disk. `TOP_TEN_DATA_DIR` selects the result directory; otherwise .scenario-data is used. The sample routes are unauthenticated and intended for fictional families. Multi-instance or serverless use requires shared storage and application authorization.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
 
-Use Node.js 22+ and pnpm 9.15.9. The tracked example is `env.local.example`; local Next.js uses `.env.local`. Docker embeds the public App ID at build time, accepts the certificate only at runtime, and keeps the writable data directory owned by UID 1001. Run `pnpm run verify:docker` separately from `pnpm run verify`; see [README deployment](README.md#deployment).
+Use Node.js 22+ and pnpm 9.15.9. Copy env.local.example to .env.local only when absent. Supply the public App ID at build and runtime and keep the App Certificate server-only. Run pnpm run verify:docker separately for container acceptance.
 
 ## Routing / Ownership
 
 - UI and RTC/RTM client lifecycle live in `components`.
 - Browser-facing API routes live in `app/api`.
-- Constants, Agent config/tools, presentation and business modules live in `lib`; this repo owns its complete implementation.
+- Constants, Agent configuration, empty tools, presentation and static reference material live in `lib`; this repo owns its complete implementation.
 - Types live in `types`; business documentation lives in `docs/scenario`. Do not reintroduce a root multi-scenario registry.
 - If a workflow, request contract, or ownership boundary changes, update `README.md`, `AGENTS.md`, and the relevant `docs/ai/` files in the same change.
 
@@ -224,21 +232,11 @@ Before finishing a change:
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
 
-## Scenario 04 result workflow
 
-The business usage guide is `docs/scenario/README.md`. Preserve stable lead/session identity and explicit parent agreement. `results.ts` owns the local durable file store and atomically links trial requests to follow-up results. `request_received` is not booking confirmation.
+## Conversation-only first version
 
-`LandingPage` creates the result before voice startup, passes its ID to invite-agent, polls results while live, and finalizes without changing the supported business conclusion. Agent tools are session-bound. Missing or local-only `TOP_TEN_SCENARIO_TOOL_BASE_URL` must permit local-data discussion without tool writes. Do not derive business conclusions from transcript keywords.
+This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
 
-Use `pnpm run test:follow-up` for the result workflow; `pnpm run verify` includes it. Test data must use a temporary `TOP_TEN_DATA_DIR`. The file store targets one local Node.js process on durable disk. Keep acceptance screenshots and synthetic records local. UI source adaptations are documented in `THIRD_PARTY_NOTICES.md`.
+## Scenario UI alignment
 
-
-## Local conversation and optional tools
-
-Default conversations append courses.json and existing parent inquiry context to the prompt. The advisor can discuss age eligibility, fixed trial times, needs and contact preferences, then give a verbal summary. Missing tool configuration does not block the start button or invite. Local session/history scaffolding remains, but spoken answers are not saved and no trial request or advisor notification is submitted. A public HTTPS tool origin enables the existing session-bound save/submission workflow; failures must not be replaced by fixture success.
-
-TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.
-
-## Scenario 01 UI alignment (2026-10-21)
-
-The local `LandingPage` UI helpers compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. Business views remain scenario-owned below the voice workspace. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
+The local `LandingPage` UI helpers compose the entry, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. No business forms, saved-result panels or data workbenches are included. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.

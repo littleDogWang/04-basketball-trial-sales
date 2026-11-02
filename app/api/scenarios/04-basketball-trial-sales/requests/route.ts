@@ -1,5 +1,6 @@
-import { readJson, resultResponse, sessionFrom } from '@/lib/basketball-trial-sales/http';
-import { requestTrial } from '@/lib/basketball-trial-sales/results';
-export async function POST(request: Request) {
-  return resultResponse(async () => requestTrial(sessionFrom(request), await readJson(request)));
+import { NextResponse } from 'next/server';
+
+// Business data is not available in the conversation-only first version.
+export async function POST(_request?: Request, _context?: unknown) {
+  return NextResponse.json({ error: 'business_data_not_available', message: 'This first version provides voice conversation only.' }, { status: 410 });
 }

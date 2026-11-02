@@ -1,7 +1,3 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { createFollowUp } from '../lib/basketball-trial-sales/results';
 import { AgoraClient, Agent } from 'agora-agents';
 import { RtcTokenBuilder } from 'agora-token';
 import { NextRequest } from 'next/server';
@@ -16,9 +12,6 @@ function getJson(response: Response) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
-const testDataDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'scenario07-api-'));
-process.env.TOP_TEN_DATA_DIR = testDataDirectory;
-process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = 'https://tools.example.test';
 process.env.NEXT_PUBLIC_AGORA_APP_ID = '0123456789abcdef0123456789abcdef';
 process.env.NEXT_AGORA_APP_CERTIFICATE = 'fedcba9876543210fedcba9876543210';
 
@@ -342,7 +335,6 @@ async function verifyInviteAgentSuccess() {
       body: JSON.stringify({
         requester_id: 'user-4321',
         channel_name: 'test-channel',
-        session_id: createFollowUp('PARENT-1042').session_id,
       }),
       method: 'POST',
     });
@@ -467,7 +459,7 @@ async function main() {
   console.log('API contract checks passed');
 }
 
-main().finally(() => fs.rmSync(testDataDirectory, { recursive: true, force: true })).catch((error) => {
+main().catch((error) => {
   console.error(error);
   process.exit(1);
 });

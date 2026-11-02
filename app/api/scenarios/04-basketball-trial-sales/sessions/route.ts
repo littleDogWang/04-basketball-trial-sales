@@ -1,9 +1,6 @@
-import { readJson, resultResponse } from '@/lib/basketball-trial-sales/http';
-import { createFollowUp, parseBody, ResultError } from '@/lib/basketball-trial-sales/results';
-export async function POST(request: Request) {
-  return resultResponse(async () => {
-    const body = parseBody(await readJson(request));
-    if (typeof body.lead_id !== 'string') throw new ResultError('lead_id is required');
-    return { result: createFollowUp(body.lead_id) };
-  }, 201);
+import { NextResponse } from 'next/server';
+
+// Business data is not available in the conversation-only first version.
+export async function POST(_request?: Request, _context?: unknown) {
+  return NextResponse.json({ error: 'business_data_not_available', message: 'This first version provides voice conversation only.' }, { status: 410 });
 }
