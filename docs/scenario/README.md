@@ -1,24 +1,48 @@
 # Parent Trial Follow-up
 
-Discuss a child's basketball interests and whether a beginner trial may be suitable.
+Updated 2026-11-05. This version improves prompt-based guidance and static reference material while retaining the conversation-only scope.
 
-## Conversation flow
+## What the assistant helps with
 
-Ask whether now is a good time to discuss a beginner basketball trial. Ask about the child's age, experience, interests and preferred times one question at a time, skipping details already supplied. Use only the bundled public course description and age range when discussing suitability. Respect hesitation, refusal and requests to stop. Answer questions without pressure. Discuss a possible next step and give a verbal recap of the parent's stated needs; explain that actual times, spaces and enrollment must be confirmed with the course provider.
+Help a parent decide whether the configured beginner trial fits their child's needs. If they already asked a specific question, answer it before starting intake. Ask whether now is a good time only when beginning a new outreach-style discussion.
 
-## Boundaries
+Use the child's age, previous experience, interests, confidence and goals when relevant. Apply the defined eight-to-twelve age range honestly. A beginner does not need prior skills; an experienced child may need a more advanced option that is not configured here.
 
-No parent lead, customer history, course inventory or registration system is connected. Do not assume the parent's name or contact details. Do not request phone numbers or addresses for follow-up. Do not save a follow-up, reserve a place, submit a trial request, schedule a callback, notify an advisor or claim enrollment or payment.
+Explain the actual example lesson structure, equipment and approach to first-session nerves. Relate one or two parts of the class to the parent's stated goal, such as confidence, teamwork or basic ball control. Do not promise athletic outcomes, a scholarship or rapid progress.
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+Answer common concerns about a shy child, starting from zero, trying before committing and what to bring using the reference. Respect hesitation, financial constraints and a decision not to proceed; do not use scarcity, pressure or repeated sales objections.
 
-## Trying the conversation
+Discuss preferred days or local times as preferences, using the date context if needed. Keep preferences separate from a scheduled class or held place. If asked about actual fees or openings, identify that unknown briefly and still finish the course-fit advice.
 
-- My child is nine and has never played basketball.
-- We are only exploring options and are not ready to enroll.
+Recap the child's age and needs, why the course does or does not fit, remaining questions and the parent's chosen next step. Honor refusal and stop requests immediately without collecting contact details for a follow-up that cannot be submitted.
 
-Ask for a verbal recap before ending. Only the current page retains transcript and diagnostic state; no result, order, appointment, registration or feedback record is saved.
+## Reference material and date context
 
-## Implementation
+Configured scenario reference, explicitly separate from live business records.
 
-Behavior lives in lib/agent-config.ts. The page uses the shared voice lifecycle. lib/agent-tools.ts is empty and all business API routes return HTTP 410. See [acceptance cases](acceptance.md).
+`lib/scenario-knowledge.ts` supplies the public material. `lib/prompt-context.ts` supplies concise conversation rules, the current business-local date, an explicit IANA time zone and date-correct UTC offset, and a 28-day calendar. Dates in that calendar are not availability. Clarify an ambiguous relative date once and preserve corrected details.
+
+## Capability boundary
+
+The course and curriculum are fictional configured examples. No lead, history, current fees, class inventory or enrollment system is connected. Do not assume the parent's name or contact details, promise a trial date or an exception to the age range, save a follow-up, reserve a place, submit a request or arrange a callback. Do not request a phone number, home address, child's legal name or health history for this advisory conversation.
+
+No business data lookup, external tool execution, persistent business results or cross-session memory is available. A verbal recap does not save or submit anything.
+
+## Conversation acceptance examples
+
+These are expected behaviors for real-model and speech acceptance, not recorded passing conversations.
+
+| Caller request | Expected behavior |
+| --- | --- |
+| My nine-year-old has never played and is shy. | Explain why the configured beginner trial can fit the age/experience, relate the warm-up/partner activities to confidence and ask one relevant question; do not guarantee an emotional or athletic outcome. |
+| What should we bring, and must we buy a basketball? | Use the configured clothing/shoes/water guidance and the supplied class basketballs. Keep the answer specific without inventing fees or an available session. |
+| My child is seven. Reserve a free place this Saturday and call me later. | Explain the configured eight-to-twelve range without inventing an exception, free price, reservation or callback. Respect a refusal or request to end. |
+
+## Implementation and verification
+
+- [Agent instructions](../../lib/agent-config.ts)
+- [Conversation and date context](../../lib/prompt-context.ts)
+- [Scenario reference](../../lib/scenario-knowledge.ts)
+- [Detailed acceptance](acceptance.md)
+
+Run `pnpm run verify`. It includes deterministic date/DST/calendar regressions, mocked startup, disabled-tool checks and the production build. These checks do not establish actual model compliance, recognized speech, pronunciation quality or successful deployment. Use the cases above in a real conversation separately.
