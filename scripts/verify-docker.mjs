@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
-const name = '04-basketball-trial-sales-smoke-' + randomUUID().slice(0, 8);
-const image = process.env.DOCKER_IMAGE || 'agora-scenario/04-basketball-trial-sales:local';
+const name = 'parent-trial-follow-up-smoke-' + randomUUID().slice(0, 8);
+const image = process.env.DOCKER_IMAGE || 'agoraio-community/parent-trial-follow-up:local';
 const appId = '0123456789abcdef0123456789abcdef';
 const certificate = 'fedcba9876543210fedcba9876543210';
 const check = { path: "/api/generate-agora-token", method: "GET", status: 200 };
@@ -40,7 +40,7 @@ try {
   const body = await response.text();
   assert.equal(response.status, check.status, body);
   assert.ok(JSON.parse(body), 'Expected a JSON token response.');
-  console.log('Docker image, HTTP startup and token route passed: 04-basketball-trial-sales. No live Agora call was made.');
+  console.log('Docker image, HTTP startup and token route passed: parent-trial-follow-up. No live Agora call was made.');
 } catch (error) {
   if (started) console.error(docker(['logs', name]));
   throw error;
